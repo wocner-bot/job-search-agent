@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: job-search-agent-api
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: STORAGE_DIR
+        value: /var/data/storage
+      - key: CORS_ORIGINS
+        fromService:
+          type: web
+          name: job-search-agent-web
+          property: host
+      - key: DATABASE_URL
+        fromDatabase:
+          name: job-search-agent-db
+          property: connectionString
+    disk:
+      name: job-search-agent-storage
+      mountPath: /var/data
+      sizeGB: 1
+  - type: web
+    name: job-search-agent-web
+    env: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE
+        fromService:
+          type: web
+          name: job-search-agent-api
+          property: host
+databases:
+  - name: job-search-agent-db
+    databaseName: job_search_agent
+    user: job_search_agent
