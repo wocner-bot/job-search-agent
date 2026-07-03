@@ -1,6 +1,7 @@
 from collections.abc import Generator
 
 from sqlalchemy import text
+from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
 from app import models  # noqa: F401
@@ -9,7 +10,10 @@ from app.config import get_settings
 
 settings = get_settings()
 connect_args = {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
-engine = create_engine(settings.database_url, connect_args=connect_args)
+engine_kwargs = {"connect_args": connect_args}
+if settings.database_url == "sqlite:///:memory:":
+    engine_kwargs["poolclass"] = StaticPool
+engine = create_engine(settings.database_url, **engine_kwargs)
 
 
 def ensure_sqlite_schema_compatible(database_engine=engine) -> None:
