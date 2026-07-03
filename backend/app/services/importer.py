@@ -25,18 +25,49 @@ def _int_value(value: Any, default: int = 0) -> int:
 
 def import_csv_rows(path: Path) -> list[dict[str, Any]]:
     with path.open(newline="", encoding="utf-8") as file:
-        return list(csv.DictReader(file))
+        return [
+            row
+            for row in csv.DictReader(file)
+            if any(_value(value) for value in row.values())
+        ]
 
 
 def import_xlsx_sheet(path: Path, sheet_name: str) -> list[dict[str, Any]]:
-    workbook = load_workbook(path, data_only=True)
-    sheet = workbook[sheet_name]
-    headers = [_value(cell.value) for cell in sheet[1]]
+    workbook = load_workbook(path, read_only=True, data_only=True)
+    try:
+        sheet = workbook[sheet_name]
+        headers = [
+            _value(cell.value) for cell in next(sheet.iter_rows(min_row=1, max_row=1))
+        ]
+        rows: list[dict[str, Any]] = []
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            record = {
+                headers[index]: row[index] if index < len(row) else None
+                for index in range(len(headers))
+            }
+            if any(_value(value) for value in record.values()):
+                rows.append(record)
+        return rows
+    finally:
+        workbook.close()
+
+
+def material_rows_with_summaries(
+    message_rows: list[dict[str, Any]],
+    cv_index_rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    summaries_by_id = {
+        _value(row.get("ID")): _value(row.get("Summary"))
+        for row in cv_index_rows
+        if _value(row.get("ID")) and _value(row.get("Summary"))
+    }
     rows: list[dict[str, Any]] = []
-    for row in sheet.iter_rows(min_row=2, values_only=True):
-        record = {headers[index]: row[index] if index < len(row) else None for index in range(len(headers))}
-        if any(_value(value) for value in record.values()):
-            rows.append(record)
+    for row in message_rows:
+        enriched = dict(row)
+        row_id = _value(enriched.get("ID"))
+        if not _value(enriched.get("Summary")) and row_id in summaries_by_id:
+            enriched["Summary"] = summaries_by_id[row_id]
+        rows.append(enriched)
     return rows
 
 
