@@ -17,6 +17,17 @@ def test_health_returns_ok():
     assert response.json() == {"status": "ok", "service": "job-search-agent"}
 
 
+def test_root_returns_api_entrypoint():
+    client = TestClient(app)
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {
+        "service": "job-search-agent",
+        "health": "/api/health",
+        "docs": "/docs",
+    }
+
+
 def test_create_vacancy_and_list_it():
     reset_database()
     with TestClient(app) as client:

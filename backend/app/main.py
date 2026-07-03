@@ -25,4 +25,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/")
+def root() -> dict[str, str]:
+    return {
+        "service": "job-search-agent",
+        "health": "/api/health",
+        "docs": "/docs",
+    }
+
+
 app.include_router(router)
