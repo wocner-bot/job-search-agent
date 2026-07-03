@@ -2,6 +2,7 @@ from collections.abc import Generator
 
 from sqlmodel import Session, SQLModel, create_engine
 
+from app import models  # noqa: F401
 from app.config import get_settings
 
 
