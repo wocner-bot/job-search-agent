@@ -39,10 +39,25 @@ This repository currently lives in a path with `#` characters, which Vite cannot
 
 ## Render
 
-Use `render.yaml` as a Blueprint. Configure these environment variables if not supplied by the Blueprint:
+Use `render.yaml` as a Blueprint:
+
+1. Push this repository to GitHub, GitLab, or Bitbucket.
+2. In Render, choose **New > Blueprint**.
+3. Connect the repository and select the branch that contains `render.yaml`.
+4. Review the proposed resources:
+   - `job-search-agent-api`
+   - `job-search-agent-web`
+   - `job-search-agent-db`
+5. Deploy the Blueprint.
+
+The Blueprint wires these environment variables automatically:
 
 - `DATABASE_URL`
 - `STORAGE_DIR`
 - `CORS_ORIGINS`
 - `APP_ENV`
-- `OPENAI_API_KEY` for optional LLM-assisted generation
+- `VITE_API_BASE`
+
+The default Blueprint uses Render free plans. Free Render Postgres databases expire after 30 days; switch `job-search-agent-db` to a paid plan for persistent production data.
+
+`OPENAI_API_KEY` is optional and can be added later if LLM-assisted generation is enabled.
