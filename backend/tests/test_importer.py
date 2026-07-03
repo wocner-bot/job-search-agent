@@ -1,6 +1,11 @@
 from pathlib import Path
 
-from app.services.importer import import_csv_rows, import_xlsx_sheet, normalize_queue_row
+from app.services.importer import (
+    import_csv_rows,
+    import_xlsx_sheet,
+    normalize_material_row,
+    normalize_queue_row,
+)
 
 
 def test_normalize_queue_row_uses_source_url_and_cv_file_path():
@@ -40,6 +45,27 @@ def test_import_csv_rows_reads_two_rows():
     assert len(rows) == 2
     assert rows[0]["Company"] == "42dot"
     assert rows[1]["ID"] == "L04"
+
+
+def test_normalize_material_row_imports_messages_and_fit_summary():
+    row = {
+        "Short Platform Note": "Short note for LinkedIn",
+        "Recruiter / Telegram DM": "DM for recruiter",
+        "Email Cover Letter": "Cover letter body",
+        "Fit Summary": "Strong HMI and automotive fit.",
+    }
+    material = normalize_material_row(row, vacancy_id=12)
+    assert material.vacancy_id == 12
+    assert material.short_note == "Short note for LinkedIn"
+    assert material.recruiter_dm == "DM for recruiter"
+    assert material.email_cover_letter == "Cover letter body"
+    assert material.fit_summary == "Strong HMI and automotive fit."
+
+    material_from_summary = normalize_material_row({"Summary": "Summary field fit text."}, vacancy_id=13)
+    assert material_from_summary.fit_summary == "Summary field fit text."
+
+    material_with_fallback = normalize_material_row({}, vacancy_id=14)
+    assert material_with_fallback.fit_summary == "Imported from tailored package."
 
 
 def test_real_package_imports_26_rows_when_present():

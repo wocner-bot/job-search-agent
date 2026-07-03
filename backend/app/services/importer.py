@@ -70,10 +70,13 @@ def normalize_queue_row(row: dict[str, Any], package_root: Path) -> Vacancy:
 
 
 def normalize_material_row(row: dict[str, Any], vacancy_id: int) -> ApplicationMaterial:
+    fit_summary = (
+        _value(row.get("Fit Summary")) or _value(row.get("Summary")) or "Imported from tailored package."
+    )
     return ApplicationMaterial(
         vacancy_id=vacancy_id,
         short_note=_value(row.get("Short Platform Note")),
         recruiter_dm=_value(row.get("Recruiter / Telegram DM")),
         email_cover_letter=_value(row.get("Email Cover Letter")),
-        fit_summary="Imported from tailored package.",
+        fit_summary=fit_summary,
     )
