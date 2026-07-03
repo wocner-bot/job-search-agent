@@ -1,11 +1,13 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.status import ApplicationStatus
 
 
 class CandidateProfileRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
     target_titles: str
@@ -15,6 +17,8 @@ class CandidateProfileRead(BaseModel):
 
 
 class VacancyRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     external_id: str
     rank: Optional[int]
@@ -40,6 +44,8 @@ class VacancyRead(BaseModel):
 
 
 class VacancyCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     external_id: str
     source: str = "Manual"
     company: str
@@ -47,15 +53,17 @@ class VacancyCreate(BaseModel):
     location: str = ""
     language: str = ""
     source_url: str = ""
-    description: str = ""
 
 
 class StatusUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     status: ApplicationStatus
-    actor: str = "user"
 
 
 class ApplicationMaterialRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     vacancy_id: int
     short_note: str
     recruiter_dm: str

@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import Optional
 
+from sqlalchemy import Column, Enum as SQLAlchemyEnum
 from sqlmodel import Field, SQLModel
 
 from app.status import ApplicationStatus
@@ -35,7 +36,17 @@ class Vacancy(SQLModel, table=True):
     language: str = ""
     fit_score: int = 0
     priority: str = "Medium"
-    submit_status: ApplicationStatus = ApplicationStatus.DRAFT
+    submit_status: ApplicationStatus = Field(
+        default=ApplicationStatus.DRAFT,
+        sa_column=Column(
+            SQLAlchemyEnum(
+                ApplicationStatus,
+                values_callable=lambda enum_class: [status.value for status in enum_class],
+                native_enum=False,
+            ),
+            nullable=False,
+        ),
+    )
     next_action: str = ""
     cv_file_path: str = ""
     pdf_file_path: str = ""
