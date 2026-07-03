@@ -10,6 +10,8 @@ services:
     envVars:
       - key: APP_ENV
         value: production
+      - key: PYTHON_VERSION
+        value: 3.12.8
       - key: STORAGE_DIR
         value: /tmp/job-search-agent-storage
       - key: CORS_ORIGINS
