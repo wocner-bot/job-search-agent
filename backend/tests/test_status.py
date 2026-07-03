@@ -1,6 +1,6 @@
 import pytest
 from pydantic import ValidationError
-from sqlalchemy import text
+from sqlalchemy import exc, text
 from sqlmodel import Session, SQLModel, create_engine
 
 from app.models import Vacancy
@@ -48,6 +48,42 @@ def test_vacancy_status_persists_human_value():
         ).scalar_one()
 
     assert stored_status == ApplicationStatus.DRAFT.value
+
+
+def test_invalid_vacancy_status_string_is_rejected_on_persistence():
+    engine = create_engine("sqlite:///:memory:")
+    SQLModel.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        session.add(Vacancy(external_id="vacancy-1", submit_status="Bogus"))
+
+        with pytest.raises(exc.StatementError):
+            session.commit()
+
+
+def test_vacancy_status_round_trips_as_enum_and_value():
+    engine = create_engine("sqlite:///:memory:")
+    SQLModel.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        vacancy = Vacancy(external_id="vacancy-1", submit_status=ApplicationStatus.SENT)
+        session.add(vacancy)
+        session.commit()
+        vacancy_id = vacancy.id
+        session.expunge_all()
+
+        reloaded = session.get(Vacancy, vacancy_id)
+
+    assert reloaded is not None
+    assert reloaded.submit_status == ApplicationStatus.SENT
+
+    with engine.connect() as connection:
+        stored_status = connection.execute(
+            text("SELECT submit_status FROM vacancy WHERE external_id = :external_id"),
+            {"external_id": "vacancy-1"},
+        ).scalar_one()
+
+    assert stored_status == ApplicationStatus.SENT.value
 
 
 def test_status_update_rejects_actor():
