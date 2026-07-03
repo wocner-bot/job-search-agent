@@ -33,7 +33,9 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`.
+Open `http://127.0.0.1:5173`.
+
+This repository currently lives in a path with `#` characters, which Vite cannot reliably transform in dev mode. `npm run dev` therefore serves the built preview locally. Use `npm run dev:vite` only after moving or cloning the project into a path without `#`.
 
 ## Render
 
