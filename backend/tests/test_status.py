@@ -3,6 +3,7 @@ from pydantic import ValidationError
 from sqlalchemy import exc, text
 from sqlmodel import Session, SQLModel, create_engine
 
+from app.database import ensure_sqlite_schema_compatible
 from app.models import Vacancy
 from app.schemas import StatusUpdate, VacancyCreate, VacancyRead
 from app.status import ApplicationStatus, assert_status_change_allowed
@@ -84,6 +85,40 @@ def test_vacancy_status_round_trips_as_enum_and_value():
         ).scalar_one()
 
     assert stored_status == ApplicationStatus.SENT.value
+
+
+def test_raw_sql_rejects_invalid_vacancy_status():
+    engine = create_engine("sqlite:///:memory:")
+    SQLModel.metadata.create_all(engine)
+
+    with engine.begin() as connection:
+        with pytest.raises(exc.IntegrityError):
+            connection.execute(
+                text(
+                    "INSERT INTO vacancy (external_id, submit_status) "
+                    "VALUES (:external_id, :submit_status)"
+                ),
+                {"external_id": "vacancy-1", "submit_status": "Bogus"},
+            )
+
+
+def test_file_backed_sqlite_stale_vacancy_schema_is_rejected(tmp_path):
+    database_path = tmp_path / "stale.db"
+    engine = create_engine(f"sqlite:///{database_path}")
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "CREATE TABLE vacancy ("
+                "id INTEGER PRIMARY KEY, "
+                "external_id VARCHAR NOT NULL, "
+                "submit_status VARCHAR NOT NULL"
+                ")"
+            )
+        )
+
+    with pytest.raises(RuntimeError, match="backend/storage/job_search_agent.db"):
+        ensure_sqlite_schema_compatible(engine)
 
 
 def test_status_update_rejects_actor():
