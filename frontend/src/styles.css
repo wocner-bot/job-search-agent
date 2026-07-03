@@ -103,3 +103,164 @@ textarea {
     position: static;
   }
 }
+
+button,
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #bac5d1;
+  background: #ffffff;
+  color: #17202a;
+  border-radius: 6px;
+  padding: 9px 12px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+button:hover,
+.button-link:hover {
+  border-color: #718096;
+}
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.metrics div {
+  background: #ffffff;
+  border: 1px solid #d9e0e7;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.metrics span {
+  display: block;
+  color: #657386;
+  font-size: 13px;
+}
+
+.metrics strong {
+  display: block;
+  font-size: 28px;
+  margin-top: 4px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+}
+
+.filters input,
+.filters select,
+.detail-panel select {
+  border: 1px solid #c7d0da;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.queue-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 16px;
+}
+
+.queue-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.queue-table th,
+.queue-table td {
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 10px;
+}
+
+.queue-table tr {
+  cursor: pointer;
+}
+
+.queue-table tr.selected,
+.queue-table tbody tr:hover {
+  background: #eef4f8;
+}
+
+.detail-panel {
+  background: #ffffff;
+  border: 1px solid #d9e0e7;
+  border-radius: 8px;
+  padding: 18px;
+  min-height: 360px;
+}
+
+.detail-panel h2 {
+  margin: 0;
+}
+
+.detail-panel a {
+  display: block;
+  margin: 8px 0;
+  color: #0f609b;
+}
+
+.muted,
+.notice {
+  color: #657386;
+}
+
+.notice {
+  background: #edf7ed;
+  border: 1px solid #bfdfc0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+
+dl {
+  margin: 16px 0;
+}
+
+dt {
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+dd {
+  margin: 4px 0 0;
+  color: #344456;
+}
+
+.messages textarea {
+  min-height: 90px;
+  margin-top: 8px;
+}
+
+.compact {
+  padding: 12px;
+}
+
+@media (max-width: 1040px) {
+  .queue-layout,
+  .metrics {
+    grid-template-columns: 1fr;
+  }
+}
