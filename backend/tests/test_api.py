@@ -103,6 +103,47 @@ def test_create_vacancy_accepts_source_description_and_generates_tailored_cv():
         assert "https://www.linkedin.com/jobs/example" not in text
 
 
+def test_tailored_cv_uses_russian_for_russian_vacancy():
+    reset_database()
+    with TestClient(app) as client:
+        client.post(
+            "/api/candidate/text",
+            json={"text": "Aleksandr Grenkov Lead Product Designer Automotive UX HMI Voice UX Design Systems English B2"},
+        )
+        created_response = client.post(
+            "/api/vacancies",
+            json={
+                "external_id": "RU-1",
+                "source": "Telegram @wantapply_design",
+                "company": "Команда продукта",
+                "title": "Ведущий продуктовый дизайнер",
+                "language": "Russian",
+                "description_raw": "Ищем продуктового дизайнера для дизайн-системы, интерфейсов и сложных пользовательских сценариев.",
+                "requirements": "Figma; дизайн-системы; UX; интерфейсы",
+                "responsibilities": "Проектировать продуктовые сценарии и развивать дизайн-систему.",
+            },
+        )
+        assert created_response.status_code == 200
+        assert client.post("/api/analysis/run").status_code == 200
+
+        vacancy = client.get("/api/vacancies").json()[0]
+        cv_response = client.get(vacancy["cv_file_path"])
+        assert cv_response.status_code == 200
+
+        document = Document(BytesIO(cv_response.content))
+        text = "\n".join(paragraph.text for paragraph in document.paragraphs)
+        assert "Адаптировано под:" in text
+        assert "Профиль" in text
+        assert "Ключевые слова" in text
+        assert "Навыки" in text
+        assert "Опыт" in text
+        assert "общее" in text
+        assert "Без неподтвержденных метрик" in text
+        assert "Profile" not in text
+        assert "Skills" not in text
+        assert "Experience" not in text
+
+
 def test_status_update_rejects_caller_controlled_actor():
     reset_database()
     with TestClient(app) as client:

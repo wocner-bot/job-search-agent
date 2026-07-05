@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -270,12 +271,17 @@ def download_tailored_cv(vacancy_id: int, session: Session = Depends(get_session
     if not vacancy:
         raise HTTPException(status_code=404, detail="Vacancy not found")
     document = build_tailored_cv_document(profile, vacancy)
-    filename = f"{vacancy.external_id}_{vacancy.title}".replace("/", "-").replace(" ", "_")
+    filename = _safe_download_filename(f"{vacancy.external_id}_{vacancy.title}")
     return StreamingResponse(
         document,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         headers={"Content-Disposition": f'attachment; filename="{filename}.docx"'},
     )
+
+
+def _safe_download_filename(value: str) -> str:
+    filename = re.sub(r"[^A-Za-z0-9_.-]+", "_", value).strip("._")
+    return filename or "tailored_cv"
 
 
 @router.get("/materials")

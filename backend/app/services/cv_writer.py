@@ -108,6 +108,9 @@ def build_master_cv_document(profile: CandidateProfile) -> BytesIO:
 
 
 def build_tailored_cv_document(profile: CandidateProfile, vacancy: Vacancy) -> BytesIO:
+    if _is_russian_vacancy(vacancy):
+        return _build_russian_tailored_cv_document(profile, vacancy)
+
     document = _base_document()
     _add_title(document, "ALEKSANDR GRENKOV", vacancy.tailored_headline or vacancy.title)
     document.add_paragraph(f"Tailored for: {vacancy.company} — {vacancy.title}")
@@ -140,6 +143,46 @@ def build_tailored_cv_document(profile: CandidateProfile, vacancy: Vacancy) -> B
     return _save(document)
 
 
+def _build_russian_tailored_cv_document(profile: CandidateProfile, vacancy: Vacancy) -> BytesIO:
+    document = _base_document()
+    _add_title(document, "ALEKSANDR GRENKOV", vacancy.title or vacancy.tailored_headline, language="ru")
+    document.add_paragraph(f"Адаптировано под: {vacancy.company} — {vacancy.title}")
+    document.add_paragraph(f"Соответствие: {vacancy.fit_score} / {_priority_label_ru(vacancy.priority)}")
+    document.add_heading("Профиль", level=2)
+    document.add_paragraph(
+        f"Ведущий продуктовый дизайнер под задачу «{vacancy.title}»: 10+ лет опыта в продуктовом дизайне, "
+        "UX-стратегии, дизайн-системах, автомобильных интерфейсах, голосовом UX, smart city, "
+        "enterprise-интерфейсах, telecom, B2B/B2C продуктах и мобильном UX. Английский B2."
+    )
+    document.add_heading("Ключевые слова", level=2)
+    _add_bullets(document, _split_keywords(vacancy.top_match_keywords or vacancy.vacancy_keywords))
+    if vacancy.requirements:
+        document.add_heading("Требования вакансии", level=2)
+        _add_bullets(document, _split_keywords(vacancy.requirements))
+    if vacancy.responsibilities:
+        document.add_heading("Задачи вакансии", level=2)
+        _add_bullets(document, _split_keywords(vacancy.responsibilities))
+    document.add_heading("Навыки", level=2)
+    _add_bullets(document, _tailored_bullets(vacancy, language="ru"))
+    document.add_heading("Опыт", level=2)
+    for heading, bullets in _experience_blocks(vacancy, language="ru"):
+        paragraph = document.add_paragraph()
+        paragraph.add_run(heading).bold = True
+        _add_bullets(document, bullets)
+    document.add_heading("общее", level=2)
+    document.add_paragraph(
+        f"Резюме адаптировано под вакансию «{vacancy.title}»: акцент на релевантные ключевые слова, "
+        "доменный опыт и подтвержденные продуктовые задачи без преувеличений."
+    )
+    if vacancy.vacancy_keywords:
+        document.add_paragraph(f"Ключевой фокус адаптации: {vacancy.vacancy_keywords}.")
+    document.add_paragraph(
+        "Без неподтвержденных метрик, без завышения уровня языка, без инженерных заявлений вне продуктовой и UX-зоны ответственности, "
+        "без утверждения, что отклик уже отправлен."
+    )
+    return _save(document)
+
+
 def _base_document() -> Document:
     document = Document()
     section = document.sections[0]
@@ -152,14 +195,17 @@ def _base_document() -> Document:
     return document
 
 
-def _add_title(document: Document, name: str, headline: str) -> None:
+def _add_title(document: Document, name: str, headline: str, language: str = "en") -> None:
     paragraph = document.add_paragraph()
     run = paragraph.add_run(name)
     run.bold = True
     run.font.size = Pt(16)
     subtitle = document.add_paragraph()
     subtitle.add_run(headline).bold = True
-    document.add_paragraph("Email • LinkedIn • Portfolio • Telegram • Open to international and remote opportunities")
+    if language == "ru":
+        document.add_paragraph("Email • LinkedIn • Портфолио • Telegram • открыт к удаленным и международным возможностям")
+    else:
+        document.add_paragraph("Email • LinkedIn • Portfolio • Telegram • Open to international and remote opportunities")
 
 
 def _add_bullets(document: Document, items: list[str]) -> None:
@@ -179,7 +225,7 @@ def _split_keywords(value: str) -> list[str]:
     return [item.strip() for item in value.split(";") if item.strip()]
 
 
-def _tailored_bullets(vacancy: Vacancy) -> list[str]:
+def _tailored_bullets(vacancy: Vacancy, language: str = "en") -> list[str]:
     keywords = " ".join(
         [
             vacancy.top_match_keywords,
@@ -189,6 +235,22 @@ def _tailored_bullets(vacancy: Vacancy) -> list[str]:
             vacancy.responsibilities,
         ]
     ).lower()
+    if language == "ru":
+        bullets = [
+            f"Сформировал позиционирование под роль «{vacancy.title}», сопоставив ключевые слова вакансии с подтвержденным опытом в продуктовом дизайне, UX-стратегии и дизайн-системах.",
+            "Структурировал сложные пользовательские сценарии, переводя требования продукта, инженерные ограничения и исследования в информационную архитектуру, прототипы и повторно используемые паттерны.",
+        ]
+        if "automotive" in keywords or "hmi" in keywords or "vehicle" in keywords or "авто" in keywords:
+            bullets.append("Проектировал автомобильные UX-паттерны: голосовой ассистент, HMI-сценарии, звуковую идентичность, AVAS, промпты, интенты и tone of voice.")
+        if "voice" in keywords or "conversation" in keywords or "prompt" in keywords or "intent" in keywords or "голос" in keywords:
+            bullets.append("Разрабатывал conversational UX: сценарии диалога, промпты, интенты, поведение ассистента, tone of voice и мультимодальную логику.")
+        if "design systems" in keywords or "components" in keywords or "governance" in keywords or "дизайн-систем" in keywords:
+            bullets.append("Стандартизировал продуктовый опыт через дизайн-системы, компонентные библиотеки, governance-подход и регулярные дизайн-ревью.")
+        if "smart city" in keywords or "transport" in keywords or "operator" in keywords or "парков" in keywords:
+            bullets.append("Упрощал городские и операторские сценарии через dashboards, транспортные системы, парковочные приложения и интерфейсы мониторинга.")
+        if "telecom" in keywords or "b2b" in keywords or "b2c" in keywords:
+            bullets.append("Работал с telecom-продуктами B2B/B2C, исследовательскими сценариями и масштабируемыми интерфейсными системами.")
+        return bullets[:6]
     bullets = [
         f"Established a tailored {vacancy.title} positioning by mapping the role keywords to verified product design, UX strategy, and design-system experience.",
         "Structured complex user journeys by translating product, engineering, and research inputs into information architecture, prototypes, and reusable interaction patterns.",
@@ -206,7 +268,36 @@ def _tailored_bullets(vacancy: Vacancy) -> list[str]:
     return bullets[:6]
 
 
-def _experience_blocks(vacancy: Vacancy) -> list[tuple[str, list[str]]]:
+def _experience_blocks(vacancy: Vacancy, language: str = "en") -> list[tuple[str, list[str]]]:
+    if language == "ru":
+        return [
+            (
+                "Ведущий продуктовый дизайнер — ATOM, стартап электромобиля | 2023-2026",
+                [
+                    "Вел продуктовый дизайн in-car голосового ассистента: conversational architecture, промпты, интенты, tone of voice и мультимодальный UX.",
+                    "Проектировал UX-логику звуковой идентичности автомобиля, AVAS и внутренних звуковых индикаций совместно с инженерными и исследовательскими командами.",
+                ],
+            ),
+            (
+                "Продуктовый дизайнер — Information Technology Factory | 2022-2023",
+                [
+                    "Проектировал UX/UI для управления трафиком, контроля скорости, парковочных систем, городских dashboards и операторских интерфейсов.",
+                    "Создавал Android и iOS сценарии парковочного приложения: от исследований и информационной архитектуры до визуального дизайна.",
+                ],
+            ),
+            (
+                "Ведущий продуктовый дизайнер — VEON / Beeline Russia",
+                [
+                    "Вел дизайн B2B/B2C telecom-продуктов, дизайн-систем, UX-исследований и координацию внешних дизайн-команд.",
+                ],
+            ),
+            (
+                "Продуктовый дизайнер — ABBYY Software House",
+                [
+                    "Проектировал UI/UX для международных software-продуктов, включая Lingvo и PDF Transformer.",
+                ],
+            ),
+        ]
     return [
         (
             "Lead Product Designer — ATOM, Electric Vehicle Startup | 2023–2026",
@@ -235,6 +326,25 @@ def _experience_blocks(vacancy: Vacancy) -> list[tuple[str, list[str]]]:
             ],
         ),
     ]
+
+
+def _is_russian_vacancy(vacancy: Vacancy) -> bool:
+    language = vacancy.language.lower()
+    text = " ".join([vacancy.title, vacancy.description_raw, vacancy.requirements, vacancy.responsibilities])
+    cyrillic = sum(1 for char in text if "а" <= char.lower() <= "я" or char.lower() == "ё")
+    latin = sum(1 for char in text if "a" <= char.lower() <= "z")
+    if "russian" in language and "english" not in language:
+        return True
+    return cyrillic > latin * 0.35
+
+
+def _priority_label_ru(priority: str) -> str:
+    return {
+        "Very High": "очень высокий приоритет",
+        "High": "высокий приоритет",
+        "Medium": "средний приоритет",
+        "Low": "низкий приоритет",
+    }.get(priority, priority)
 
 
 def _save(document: Document) -> BytesIO:
