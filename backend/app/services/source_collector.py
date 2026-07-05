@@ -17,7 +17,6 @@ from app.status import ApplicationStatus
 HH_API_URL = "https://api.hh.ru/vacancies"
 HH_SOURCE = "HH.ru"
 LINKEDIN_SOURCE = "LinkedIn"
-TELEGRAM_PER_CHANNEL_LIMIT = 3
 DESIGN_SIGNAL_TERMS = (
     "product designer",
     "ux",
@@ -69,22 +68,22 @@ def collect_live_vacancies(
     today: date | None = None,
     telegram_channels: tuple[str, ...] = TELEGRAM_CHANNELS,
     per_role_limit: int = 2,
-    max_results: int = 30,
+    max_results: int = 0,
 ) -> list[Vacancy]:
     fetch_json = fetch_json or _fetch_json
     fetch_text = fetch_text or _fetch_text
     today = today or datetime.now(timezone.utc).date()
     date_from = today - timedelta(days=7)
 
-    vacancies: list[Vacancy] = []
+    candidates: list[Vacancy] = []
     seen: set[str] = set()
     for role in roles[:8]:
-        _append_unique(vacancies, seen, _linkedin_search_vacancy(role), max_results)
+        _append_unique(candidates, seen, _linkedin_search_vacancy(role))
         for vacancy in _collect_hh_vacancies(role, fetch_json, date_from, per_role_limit):
-            _append_unique(vacancies, seen, vacancy, max_results)
+            _append_unique(candidates, seen, vacancy)
     for vacancy in _collect_telegram_vacancies(profile, roles, fetch_text, date_from, telegram_channels):
-        _append_unique(vacancies, seen, vacancy, max_results)
-    return vacancies
+        _append_unique(candidates, seen, vacancy)
+    return _rank_vacancies(profile, roles, candidates, max_results)
 
 
 def _collect_hh_vacancies(
@@ -205,7 +204,6 @@ def _collect_telegram_vacancies(
     keywords = _profile_keywords(profile, roles)
     rows: list[Vacancy] = []
     for channel in channels:
-        channel_count = 0
         try:
             page = fetch_text(f"https://t.me/s/{channel}")
         except Exception:
@@ -214,8 +212,6 @@ def _collect_telegram_vacancies(
             if post.published and post.published < date_from:
                 continue
             if not _matches_keywords(post.text, keywords):
-                continue
-            if channel_count >= TELEGRAM_PER_CHANNEL_LIMIT:
                 continue
             title = _telegram_title(post.text)
             vacancy_keywords = extract_vacancy_keywords(title, post.text)
@@ -245,7 +241,6 @@ def _collect_telegram_vacancies(
                     adaptation_strategy=role.strategy if role else f"Adapt CV to the Telegram vacancy language and mirror keywords: {vacancy_keywords}.",
                 )
             )
-            channel_count += 1
     return rows
 
 
@@ -284,7 +279,24 @@ def _profile_keywords(profile: CandidateProfile, roles: tuple[RoleRecommendation
         ]
     ).lower()
     tokens = re.findall(r"[a-zа-яё][a-zа-яё/+.-]{2,}", raw)
-    stopwords = {"and", "the", "with", "для", "или", "как", "что", "это", "designer", "design"}
+    stopwords = {
+        "and",
+        "the",
+        "with",
+        "для",
+        "или",
+        "как",
+        "что",
+        "это",
+        "designer",
+        "design",
+        "product",
+        "lead",
+        "senior",
+        "head",
+        "remote",
+        "english",
+    }
     return tuple(dict.fromkeys(token for token in tokens if token not in stopwords))[:80]
 
 
@@ -316,15 +328,61 @@ def _telegram_title(text: str) -> str:
     return "Telegram vacancy"
 
 
-def _append_unique(rows: list[Vacancy], seen: set[str], vacancy: Vacancy, max_results: int) -> None:
-    if len(rows) >= max_results:
-        return
+def _append_unique(rows: list[Vacancy], seen: set[str], vacancy: Vacancy) -> None:
     key = vacancy.source_url or f"{vacancy.source}:{vacancy.title}:{vacancy.company}"
     if key in seen:
         return
     seen.add(key)
-    vacancy.rank = len(rows) + 1
     rows.append(vacancy)
+
+
+def _rank_vacancies(
+    profile: CandidateProfile,
+    roles: tuple[RoleRecommendation, ...],
+    vacancies: list[Vacancy],
+    max_results: int,
+) -> list[Vacancy]:
+    ranked = sorted(vacancies, key=lambda vacancy: _relevance_score(profile, roles, vacancy), reverse=True)
+    selected = ranked[:max_results] if max_results > 0 else ranked
+    for index, vacancy in enumerate(selected, start=1):
+        vacancy.rank = index
+    return selected
+
+
+def _relevance_score(profile: CandidateProfile, roles: tuple[RoleRecommendation, ...], vacancy: Vacancy) -> int:
+    text = " ".join(
+        [
+            vacancy.title,
+            vacancy.description_raw,
+            vacancy.requirements,
+            vacancy.responsibilities,
+            vacancy.vacancy_keywords,
+            vacancy.top_match_keywords,
+        ]
+    ).lower()
+    score = 0
+    profile_keywords = _profile_keywords(profile, roles)
+    score += sum(2 for keyword in profile_keywords if keyword in text)
+    score += max((_role_match_score(text, role) for role in roles[:12]), default=0)
+    score += sum(3 for term in DESIGN_SIGNAL_TERMS if term in text)
+    if vacancy.source.startswith("Telegram"):
+        score += 8
+    if vacancy.source == HH_SOURCE and "search link" not in vacancy.date_status:
+        score += 10
+    if vacancy.source == LINKEDIN_SOURCE or "search link" in vacancy.date_status:
+        score -= 12
+    if vacancy.description_raw and "search link" not in vacancy.description_raw.lower():
+        score += 12
+    vacancy.fit_score = min(100, max(vacancy.fit_score, 55 + score))
+    return score
+
+
+def _role_match_score(text: str, role: RoleRecommendation) -> int:
+    score = 0
+    if role.title.lower() in text:
+        score += 30
+    score += sum(7 for keyword in role.keywords if keyword.lower() in text)
+    return score
 
 
 def _fetch_json(url: str, params: dict[str, str]) -> dict:

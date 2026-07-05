@@ -86,7 +86,7 @@ def test_collect_live_vacancies_adds_hh_search_link_when_api_is_blocked():
     assert hh_vacancy.date_status == "source search link for last 7 days; verify live vacancy before sending"
 
 
-def test_collect_live_vacancies_keeps_multiple_telegram_channels_visible():
+def test_collect_live_vacancies_does_not_limit_relevant_posts_per_channel():
     profile = CandidateProfile(raw_cv_text="Product Designer Design Systems", target_titles="Product Designer")
 
     def fake_text(url: str) -> str:
@@ -112,9 +112,42 @@ def test_collect_live_vacancies_keeps_multiple_telegram_channels_visible():
         max_results=20,
     )
 
-    assert any(vacancy.source == "Telegram @wantapply_design" for vacancy in vacancies)
-    assert any(vacancy.source == "Telegram @zapwork" for vacancy in vacancies)
-    assert sum(1 for vacancy in vacancies if vacancy.source == "Telegram @wantapply_design") <= 3
+    assert sum(1 for vacancy in vacancies if vacancy.source == "Telegram @wantapply_design") == 5
+    assert sum(1 for vacancy in vacancies if vacancy.source == "Telegram @zapwork") == 5
+
+
+def test_collect_live_vacancies_ranks_by_cv_match_not_source_order():
+    profile = CandidateProfile(
+        raw_cv_text="Lead Product Designer Automotive UX HMI Design Systems Figma English B2",
+        target_titles="Lead Product Designer / Automotive UX Designer",
+        experience_areas="Automotive UX; HMI; Design Systems; Figma",
+    )
+
+    def fake_text(_url: str) -> str:
+        return """
+        <div class="tgme_widget_message" data-post="jobs/1">
+          <time datetime="2026-07-03T09:00:00+00:00"></time>
+          <div class="tgme_widget_message_text js-message_text">Visual UI Designer brand layouts figma</div>
+        </div>
+        <div class="tgme_widget_message" data-post="jobs/2">
+          <time datetime="2026-07-03T09:00:00+00:00"></time>
+          <div class="tgme_widget_message_text js-message_text">Lead Product Designer Automotive UX HMI design systems Figma vehicle dashboards</div>
+        </div>
+        """
+
+    vacancies = collect_live_vacancies(
+        profile,
+        roles=ROLE_RECOMMENDATIONS[:1],
+        fetch_json=lambda _url, _params: {"items": []},
+        fetch_text=fake_text,
+        today=date(2026, 7, 6),
+        telegram_channels=("jobs",),
+        per_role_limit=0,
+        max_results=3,
+    )
+
+    assert vacancies[0].title == "Lead Product Designer Automotive UX HMI design systems Figma vehicle dashboards"
+    assert vacancies[0].rank == 1
 
 
 def test_collect_live_vacancies_skips_irrelevant_telegram_posts():
@@ -145,3 +178,31 @@ def test_collect_live_vacancies_skips_irrelevant_telegram_posts():
 
     telegram_titles = [vacancy.title for vacancy in vacancies if vacancy.source.startswith("Telegram")]
     assert telegram_titles == ["Senior UX/UI Designer Figma design systems"]
+
+
+def test_collect_live_vacancies_has_no_default_global_limit():
+    profile = CandidateProfile(raw_cv_text="Product Designer Design Systems", target_titles="Product Designer")
+
+    def fake_text(_url: str) -> str:
+        return "".join(
+            f"""
+            <div class="tgme_widget_message" data-post="jobs/{index}">
+              <time datetime="2026-07-03T09:00:00+00:00"></time>
+              <div class="tgme_widget_message_text js-message_text">Product Designer Design Systems Figma post {index}</div>
+            </div>
+            """
+            for index in range(1, 35)
+        )
+
+    vacancies = collect_live_vacancies(
+        profile,
+        roles=ROLE_RECOMMENDATIONS[:1],
+        fetch_json=lambda _url, _params: {"items": []},
+        fetch_text=fake_text,
+        today=date(2026, 7, 6),
+        telegram_channels=("jobs",),
+        per_role_limit=0,
+    )
+
+    assert len(vacancies) > 30
+    assert any(vacancy.source == "LinkedIn" for vacancy in vacancies)
