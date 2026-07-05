@@ -3,11 +3,14 @@ import type { VacancyDraft } from "../types";
 
 const sourcePresets = [
   "LinkedIn",
-  "HH.ru",
+  "HH.ru https://hh.ru/",
   "Telegram @wantapply_design",
   "Telegram @young_relocate",
   "Telegram @vdhl_good",
+  "Telegram @moskovskayarabota",
   "Telegram @professionalsjob",
+  "Telegram @naudalenkebro",
+  "Telegram @zapwork",
   "Company ATS",
   "Greenhouse",
   "Lever",

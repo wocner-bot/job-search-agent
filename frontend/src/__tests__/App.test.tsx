@@ -50,6 +50,16 @@ const emptyIntake = renderToStaticMarkup(
 
 assert.match(emptyIntake, /Выберите источник/);
 assert.match(emptyIntake, /Выберите язык/);
+[
+  "https://hh.ru/",
+  "Telegram @wantapply_design",
+  "Telegram @young_relocate",
+  "Telegram @vdhl_good",
+  "Telegram @moskovskayarabota",
+  "Telegram @professionalsjob",
+  "Telegram @naudalenkebro",
+  "Telegram @zapwork"
+].forEach((source) => assert.match(emptyIntake, new RegExp(source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))));
 assert.doesNotMatch(emptyIntake, /<option selected="">LinkedIn<\/option>/);
 assert.doesNotMatch(emptyIntake, /<option selected="">English<\/option>/);
 
