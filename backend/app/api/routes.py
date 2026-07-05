@@ -10,7 +10,7 @@ from app.models import ApplicationMaterial, CandidateProfile, StatusEvent, Vacan
 from app.schemas import StatusUpdate, VacancyCreate
 from app.services.cv_parser import extract_profile_from_text, read_cv_text
 from app.services.exporter import export_zip_package
-from app.services.importer import import_xlsx_sheet, normalize_queue_row
+from app.services.importer import import_csv_rows, import_xlsx_sheet, normalize_queue_row
 from app.services.materials import generate_materials
 from app.services.scoring import score_vacancy
 from app.status import assert_status_change_allowed
@@ -113,6 +113,37 @@ def import_current_package(session: Session = Depends(get_session)) -> dict[str,
     for row in rows:
         vacancy = normalize_queue_row(row, package_root)
         session.add(vacancy)
+        count += 1
+    session.commit()
+    return {"imported": count}
+
+
+@router.post("/imports/vacancies/upload")
+async def import_uploaded_vacancies(file: UploadFile = File(...), session: Session = Depends(get_session)) -> dict[str, int]:
+    settings = get_settings()
+    upload_dir = settings.storage_dir / "uploads"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    filename = Path(file.filename or "vacancies.csv").name
+    path = upload_dir / filename
+    path.write_bytes(await file.read())
+
+    suffix = path.suffix.lower()
+    try:
+        if suffix == ".csv":
+            rows = import_csv_rows(path)
+        elif suffix == ".xlsx":
+            rows = import_xlsx_sheet(path, "Application Queue")
+        else:
+            raise ValueError("Unsupported vacancy file type. Use .csv or .xlsx.")
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+    if not rows:
+        raise HTTPException(status_code=400, detail="Vacancy file does not contain any rows.")
+
+    count = 0
+    for row in rows:
+        session.add(normalize_queue_row(row, path.parent))
         count += 1
     session.commit()
     return {"imported": count}

@@ -122,3 +122,36 @@ def test_candidate_upload_sanitizes_filename(tmp_path, monkeypatch):
         assert response.status_code == 200
     assert (tmp_path / "uploads" / "cv.txt").exists()
     assert not (tmp_path / "cv.txt").exists()
+
+
+def test_upload_vacancy_file_imports_csv_rows():
+    reset_database()
+    csv_bytes = (
+        "Rank,ID,Source,Company,Vacancy,Location,Posted,Date Status,Language,Fit,Priority,Submit Status,Next Action,CV File Path,Source URL,Tailored Headline,Top Match Keywords,Gaps / Risks,Adaptation Strategy\n"
+        "1,L08,LinkedIn,42dot,Lead Brand / UI Designer - Automotive,Remote,2 days ago,verified,English,96,Very High,Ready to submit manually,Submit manually,Tailored_CVs/08.docx,https://example.com/42dot,Lead Product Designer,Automotive; HMI,US location risk,Lead with ATOM\n"
+        "2,L04,LinkedIn,ZOE,Lead Product Designer - Design System,Remote,4 days ago,verified,English,95,Very High,Ready to submit manually,Submit manually,Tailored_CVs/04.docx,https://example.com/zoe,Design Systems Lead,Design systems,Need token examples,Lead with systems\n"
+    ).encode("utf-8")
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/imports/vacancies/upload",
+            files={"file": ("vacancies.csv", csv_bytes, "text/csv")},
+        )
+        assert response.status_code == 200
+        assert response.json() == {"imported": 2}
+
+        vacancies_response = client.get("/api/vacancies")
+        assert vacancies_response.status_code == 200
+        rows = vacancies_response.json()
+        assert [row["company"] for row in rows] == ["42dot", "ZOE"]
+        assert rows[0]["source_url"] == "https://example.com/42dot"
+
+
+def test_upload_vacancy_file_rejects_unsupported_format():
+    reset_database()
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/imports/vacancies/upload",
+            files={"file": ("vacancies.json", b"{}", "application/json")},
+        )
+        assert response.status_code == 400
+        assert "Unsupported vacancy file type" in response.json()["detail"]
