@@ -1,3 +1,4 @@
+import { apiUrl } from "../api.ts";
 import type { Vacancy } from "../types";
 
 export function VacancyTable({ vacancies, selectedId, onSelect }: { vacancies: Vacancy[]; selectedId?: number; onSelect: (vacancy: Vacancy) => void }) {
@@ -25,7 +26,7 @@ export function VacancyTable({ vacancies, selectedId, onSelect }: { vacancies: V
             <td>{vacancy.submit_status}</td>
             <td>
               {vacancy.cv_file_path ? (
-                <a href={vacancy.cv_file_path} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>
+                <a href={apiUrl(vacancy.cv_file_path)} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>
                   Open CV
                 </a>
               ) : (

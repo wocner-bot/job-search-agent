@@ -1,3 +1,4 @@
+import { apiUrl } from "../api.ts";
 import type { ApplicationMaterial, ApplicationStatus, Vacancy } from "../types";
 
 const statuses: ApplicationStatus[] = ["Draft", "Ready to send", "Sent", "Follow-up", "Rejected", "Archived"];
@@ -35,7 +36,7 @@ export function VacancyDetail({
         <dd>{vacancy.adaptation_strategy}</dd>
       </dl>
       {vacancy.source_url && <a href={vacancy.source_url} target="_blank" rel="noreferrer">Open vacancy</a>}
-      {vacancy.cv_file_path && <a href={vacancy.cv_file_path} target="_blank" rel="noreferrer">Open tailored CV</a>}
+      {vacancy.cv_file_path && <a href={apiUrl(vacancy.cv_file_path)} target="_blank" rel="noreferrer">Open tailored CV</a>}
       {material && (
         <div className="messages">
           <h3>Ready-to-send</h3>

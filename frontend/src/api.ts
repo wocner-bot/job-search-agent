@@ -3,8 +3,18 @@ import type { ApplicationMaterial, ApplicationStatus, Vacancy } from "./types";
 const rawApiBase = import.meta.env?.VITE_API_BASE ?? "";
 const API_BASE = rawApiBase && !rawApiBase.startsWith("http") ? `https://${rawApiBase}` : rawApiBase;
 
+export function apiUrl(path: string, base = API_BASE): string {
+  if (!path || path.startsWith("http")) {
+    return path;
+  }
+  if (!base) {
+    return path;
+  }
+  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(apiUrl(path), {
     headers: { "Content-Type": "application/json", ...(options.headers ?? {}) },
     ...options
   });
@@ -18,7 +28,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 async function upload<T>(path: string, file: File): Promise<T> {
   const formData = new FormData();
   formData.append("file", file);
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await fetch(apiUrl(path), {
     method: "POST",
     body: formData
   });
