@@ -118,7 +118,7 @@ def build_tailored_cv_document(profile: CandidateProfile, vacancy: Vacancy) -> B
         "UX strategy, design systems, automotive UX, voice UX, smart city systems, enterprise interfaces, "
         "telecom, B2B/B2C products, and mobile UX. English B2."
     )
-    document.add_heading("Exact Match Keywords", level=2)
+    document.add_heading("Keywords", level=2)
     _add_bullets(document, _split_keywords(vacancy.top_match_keywords or vacancy.vacancy_keywords))
     if vacancy.requirements:
         document.add_heading("Vacancy Requirements Mirrored", level=2)
@@ -126,25 +126,17 @@ def build_tailored_cv_document(profile: CandidateProfile, vacancy: Vacancy) -> B
     if vacancy.responsibilities:
         document.add_heading("Vacancy Responsibilities Mirrored", level=2)
         _add_bullets(document, _split_keywords(vacancy.responsibilities))
-    document.add_heading("Google XYZ Tailored Bullets", level=2)
+    document.add_heading("Skills", level=2)
     _add_bullets(document, _tailored_bullets(vacancy))
-    document.add_heading("Selected Experience", level=2)
+    document.add_heading("Experience", level=2)
     for heading, bullets in _experience_blocks(vacancy):
         paragraph = document.add_paragraph()
         paragraph.add_run(heading).bold = True
         _add_bullets(document, bullets)
-    document.add_heading("Adaptation Strategy", level=2)
+    document.add_heading("general", level=2)
     document.add_paragraph(vacancy.adaptation_strategy)
-    document.add_heading("Recruiter-Safe Notes", level=2)
     document.add_paragraph(vacancy.gaps_risks)
     document.add_paragraph("No unverified metrics, no inflated language claim, no engineering claim outside product/UX ownership, no application-sent claim.")
-    document.add_heading("Vacancy Source", level=2)
-    document.add_paragraph(f"Source: {vacancy.source or 'Manual'}")
-    document.add_paragraph(f"URL: {vacancy.source_url or 'Generated target role; verify a live vacancy before sending.'}")
-    if vacancy.description_raw:
-        document.add_paragraph(f"Source text excerpt: {vacancy.description_raw[:1200]}")
-    document.add_heading("Vacancy Link", level=2)
-    document.add_paragraph(vacancy.source_url or "Generated target role; verify a live vacancy before sending.")
     return _save(document)
 
 
