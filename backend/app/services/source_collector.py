@@ -16,6 +16,25 @@ from app.status import ApplicationStatus
 
 HH_API_URL = "https://api.hh.ru/vacancies"
 HH_SOURCE = "HH.ru"
+LINKEDIN_SOURCE = "LinkedIn"
+TELEGRAM_PER_CHANNEL_LIMIT = 3
+DESIGN_SIGNAL_TERMS = (
+    "product designer",
+    "ux",
+    "ui",
+    "ux/ui",
+    "ui/ux",
+    "designer",
+    "design system",
+    "figma",
+    "hmi",
+    "automotive",
+    "researcher",
+    "дизайнер",
+    "дизайн",
+    "интерфейс",
+    "исследователь",
+)
 TELEGRAM_CHANNELS = (
     "wantapply_design",
     "young_relocate",
@@ -60,6 +79,7 @@ def collect_live_vacancies(
     vacancies: list[Vacancy] = []
     seen: set[str] = set()
     for role in roles[:8]:
+        _append_unique(vacancies, seen, _linkedin_search_vacancy(role), max_results)
         for vacancy in _collect_hh_vacancies(role, fetch_json, date_from, per_role_limit):
             _append_unique(vacancies, seen, vacancy, max_results)
     for vacancy in _collect_telegram_vacancies(profile, roles, fetch_text, date_from, telegram_channels):
@@ -124,6 +144,32 @@ def _collect_hh_vacancies(
     return rows
 
 
+def _linkedin_search_vacancy(role: RoleRecommendation) -> Vacancy:
+    query = " ".join([role.title, *role.keywords[:3]])
+    params = urlencode({"keywords": query, "f_TPR": "r604800"})
+    return Vacancy(
+        external_id=f"LI-SEARCH-{_slug(role.title)}",
+        source=LINKEDIN_SOURCE,
+        company="LinkedIn Jobs search",
+        title=role.title,
+        location="",
+        posted="",
+        date_status="source search link for last 7 days; verify live vacancy before sending",
+        language=role.language,
+        fit_score=role.fit_score,
+        priority=role.priority,
+        submit_status=ApplicationStatus.DRAFT,
+        next_action="Open LinkedIn Jobs search results, choose a live vacancy from the last 7 days, then add the exact vacancy text.",
+        source_url=f"https://www.linkedin.com/jobs/search/?{params}",
+        description_raw=f"LinkedIn Jobs search link for {role.title}. Direct LinkedIn vacancy scraping requires authentication and may be blocked.",
+        vacancy_keywords="; ".join(role.keywords),
+        tailored_headline=role.headline,
+        top_match_keywords="; ".join(role.keywords),
+        gaps_risks="LinkedIn search link requires manual verification of the exact vacancy, publication date, and application route.",
+        adaptation_strategy=role.strategy,
+    )
+
+
 def _hh_search_fallback(role: RoleRecommendation) -> Vacancy:
     params = urlencode({"text": role.title, "search_period": "7", "order_by": "publication_time"})
     return Vacancy(
@@ -133,7 +179,7 @@ def _hh_search_fallback(role: RoleRecommendation) -> Vacancy:
         title=role.title,
         location="",
         posted="",
-        date_status="source search link; verify live vacancy before sending",
+        date_status="source search link for last 7 days; verify live vacancy before sending",
         language=role.language,
         fit_score=role.fit_score,
         priority=role.priority,
@@ -159,6 +205,7 @@ def _collect_telegram_vacancies(
     keywords = _profile_keywords(profile, roles)
     rows: list[Vacancy] = []
     for channel in channels:
+        channel_count = 0
         try:
             page = fetch_text(f"https://t.me/s/{channel}")
         except Exception:
@@ -167,6 +214,8 @@ def _collect_telegram_vacancies(
             if post.published and post.published < date_from:
                 continue
             if not _matches_keywords(post.text, keywords):
+                continue
+            if channel_count >= TELEGRAM_PER_CHANNEL_LIMIT:
                 continue
             title = _telegram_title(post.text)
             vacancy_keywords = extract_vacancy_keywords(title, post.text)
@@ -196,6 +245,7 @@ def _collect_telegram_vacancies(
                     adaptation_strategy=role.strategy if role else f"Adapt CV to the Telegram vacancy language and mirror keywords: {vacancy_keywords}.",
                 )
             )
+            channel_count += 1
     return rows
 
 
@@ -240,7 +290,9 @@ def _profile_keywords(profile: CandidateProfile, roles: tuple[RoleRecommendation
 
 def _matches_keywords(text: str, keywords: tuple[str, ...]) -> bool:
     normalized = text.lower()
-    return any(keyword in normalized for keyword in keywords)
+    has_profile_match = any(keyword in normalized for keyword in keywords)
+    has_design_signal = any(term in normalized for term in DESIGN_SIGNAL_TERMS)
+    return has_profile_match and has_design_signal
 
 
 def _best_role_for_text(roles: tuple[RoleRecommendation, ...], text: str) -> RoleRecommendation | None:
