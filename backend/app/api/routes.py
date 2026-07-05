@@ -13,8 +13,9 @@ from app.services.cv_writer import build_master_cv_document, build_tailored_cv_d
 from app.services.exporter import export_zip_package
 from app.services.importer import import_csv_rows, import_xlsx_sheet, normalize_queue_row
 from app.services.materials import generate_materials
-from app.services.recruiter import generate_role_recommendations
+from app.services.recruiter import ROLE_RECOMMENDATIONS, generate_role_recommendations
 from app.services.scoring import score_vacancy
+from app.services.source_collector import collect_live_vacancies
 from app.services.vacancy_analysis import extract_vacancy_keywords, infer_vacancy_language
 from app.status import assert_status_change_allowed
 
@@ -193,6 +194,27 @@ def generate_analysis_from_cv(session: Session = Depends(get_session)) -> dict[s
     if not profile:
         raise HTTPException(status_code=400, detail="Create a candidate profile first")
 
+    vacancies = generate_role_recommendations(profile)
+    _replace_vacancies_with_materials(session, profile, vacancies)
+    return {"generated": len(vacancies), "analyzed": len(vacancies)}
+
+
+@router.post("/analysis/from-sources")
+def generate_analysis_from_sources(session: Session = Depends(get_session)) -> dict:
+    profile = session.exec(select(CandidateProfile).order_by(CandidateProfile.id.desc())).first()
+    if not profile:
+        raise HTTPException(status_code=400, detail="Create a candidate profile first")
+
+    vacancies = collect_live_vacancies(profile, ROLE_RECOMMENDATIONS)
+    fallback = False
+    if not vacancies:
+        vacancies = generate_role_recommendations(profile)
+        fallback = True
+    _replace_vacancies_with_materials(session, profile, vacancies)
+    return {"generated": len(vacancies), "analyzed": len(vacancies), "fallback": fallback}
+
+
+def _replace_vacancies_with_materials(session: Session, profile: CandidateProfile, vacancies: list[Vacancy]) -> None:
     for material in session.exec(select(ApplicationMaterial)).all():
         session.delete(material)
     for event in session.exec(select(StatusEvent)).all():
@@ -201,17 +223,29 @@ def generate_analysis_from_cv(session: Session = Depends(get_session)) -> dict[s
         session.delete(vacancy)
     session.commit()
 
-    vacancies = generate_role_recommendations(profile)
     for vacancy in vacancies:
         session.add(vacancy)
     session.commit()
 
-    for vacancy in session.exec(select(Vacancy).order_by(Vacancy.rank)).all():
-        vacancy.cv_file_path = f"/api/vacancies/{vacancy.id}/tailored-cv.docx"
+    for vacancy in session.exec(select(Vacancy).order_by(Vacancy.rank, Vacancy.id)).all():
+        if vacancy.id:
+            vacancy.cv_file_path = f"/api/vacancies/{vacancy.id}/tailored-cv.docx"
+        result = score_vacancy(profile, vacancy)
+        vacancy.fit_score = result.fit_score
+        vacancy.priority = result.priority
+        vacancy.top_match_keywords = _merge_keywords(vacancy.top_match_keywords, result.matched_keywords)
+        vacancy.gaps_risks = result.gaps_risks
+        vacancy.adaptation_strategy = result.adaptation_strategy
         session.add(vacancy)
         session.add(generate_materials(profile, vacancy))
     session.commit()
-    return {"generated": len(vacancies), "analyzed": len(vacancies)}
+
+
+def _merge_keywords(*values: str) -> str:
+    keywords: list[str] = []
+    for value in values:
+        keywords.extend(item.strip() for item in value.split(";") if item.strip())
+    return "; ".join(dict.fromkeys(keywords))
 
 
 @router.get("/candidate/master-cv.docx")

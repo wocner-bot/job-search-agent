@@ -206,6 +206,50 @@ def test_analysis_from_cv_generates_twenty_recruiter_role_matches():
         assert "Lead Product Designer" in materials[0]["short_note"]
 
 
+def test_analysis_from_sources_collects_real_source_vacancies(monkeypatch):
+    reset_database()
+    cv_text = "Aleksandr Grenkov Lead Product Designer Automotive UX HMI Design Systems English B2"
+
+    def fake_collect_live_vacancies(profile, roles):
+        assert "Lead Product Designer" in profile.raw_cv_text
+        assert roles
+        from app.models import Vacancy
+
+        return [
+            Vacancy(
+                external_id="HH-123",
+                source="HH.ru",
+                company="AutoTech",
+                title="Lead Product Designer HMI",
+                source_url="https://hh.ru/vacancy/123",
+                description_raw="Design systems and HMI",
+                date_status="verified within 7 days",
+            ),
+            Vacancy(
+                external_id="TG-wantapply_design-77",
+                source="Telegram @wantapply_design",
+                company="@wantapply_design",
+                title="Senior Product Designer",
+                source_url="https://t.me/wantapply_design/77",
+                description_raw="Remote product design vacancy",
+                date_status="verified within 7 days",
+            ),
+        ]
+
+    monkeypatch.setattr("app.api.routes.collect_live_vacancies", fake_collect_live_vacancies)
+    with TestClient(app) as client:
+        candidate_response = client.post("/api/candidate/text", json={"text": cv_text})
+        assert candidate_response.status_code == 200
+
+        response = client.post("/api/analysis/from-sources")
+        assert response.status_code == 200
+        assert response.json() == {"generated": 2, "analyzed": 2, "fallback": False}
+
+        vacancies = client.get("/api/vacancies").json()
+        assert [row["source"] for row in vacancies] == ["HH.ru", "Telegram @wantapply_design"]
+        assert all(row["cv_file_path"] == f"/api/vacancies/{row['id']}/tailored-cv.docx" for row in vacancies)
+
+
 def test_startup_normalizes_legacy_recruiter_match_source():
     reset_database()
     with TestClient(app) as client:

@@ -54,6 +54,8 @@ export const api = {
   uploadCandidateCv: (file: File) => upload("/api/candidate/upload", file),
   uploadVacancyFile: (file: File) => upload<{ imported: number }>("/api/imports/vacancies/upload", file),
   generateMatchesFromCv: () => request<{ generated: number; analyzed: number }>("/api/analysis/from-cv", { method: "POST" }),
+  collectMatchesFromSources: () =>
+    request<{ generated: number; analyzed: number; fallback: boolean }>("/api/analysis/from-sources", { method: "POST" }),
   runAnalysis: () => request<{ analyzed: number }>("/api/analysis/run", { method: "POST" }),
   materials: () => request<ApplicationMaterial[]>("/api/materials")
 };
