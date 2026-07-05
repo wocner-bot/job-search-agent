@@ -1,5 +1,7 @@
 from zipfile import ZipFile
 
+from openpyxl import load_workbook
+
 from app.models import ApplicationMaterial, Vacancy
 from app.services.exporter import export_queue_csv, export_queue_html, export_queue_xlsx, export_zip_package
 
@@ -35,10 +37,22 @@ def test_export_queue_html_uses_generated_links(tmp_path):
 def test_export_queue_xlsx_writes_workbook(tmp_path):
     output = export_queue_xlsx(
         tmp_path,
-        [Vacancy(external_id="L08", company="42dot", title="Automotive Designer", source_url="https://example.com")],
+        [
+            Vacancy(
+                external_id="L08",
+                company="42dot",
+                title="Automotive Designer",
+                cv_file_path="/api/vacancies/1/tailored-cv.docx",
+                source_url="https://example.com",
+            )
+        ],
     )
     assert output.exists()
     assert output.suffix == ".xlsx"
+    workbook = load_workbook(output)
+    sheet = workbook["Application Queue"]
+    assert sheet["G2"].hyperlink.target == "/api/vacancies/1/tailored-cv.docx"
+    assert sheet["H2"].hyperlink.target == "https://example.com"
 
 
 def test_export_zip_package_contains_html_and_csv(tmp_path):

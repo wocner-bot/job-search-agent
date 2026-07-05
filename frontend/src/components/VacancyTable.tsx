@@ -11,6 +11,7 @@ export function VacancyTable({ vacancies, selectedId, onSelect }: { vacancies: V
           <th>Fit</th>
           <th>Priority</th>
           <th>Status</th>
+          <th>Tailored CV</th>
         </tr>
       </thead>
       <tbody>
@@ -22,6 +23,15 @@ export function VacancyTable({ vacancies, selectedId, onSelect }: { vacancies: V
             <td>{vacancy.fit_score}</td>
             <td>{vacancy.priority}</td>
             <td>{vacancy.submit_status}</td>
+            <td>
+              {vacancy.cv_file_path ? (
+                <a href={vacancy.cv_file_path} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>
+                  Open CV
+                </a>
+              ) : (
+                ""
+              )}
+            </td>
           </tr>
         ))}
       </tbody>

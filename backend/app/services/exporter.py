@@ -77,6 +77,13 @@ def export_queue_xlsx(output_dir: Path, vacancies: list[Vacancy]) -> Path:
                 vacancy.source_url,
             ]
         )
+        row_number = sheet.max_row
+        if vacancy.cv_file_path:
+            sheet.cell(row=row_number, column=7).hyperlink = vacancy.cv_file_path
+            sheet.cell(row=row_number, column=7).style = "Hyperlink"
+        if vacancy.source_url:
+            sheet.cell(row=row_number, column=8).hyperlink = vacancy.source_url
+            sheet.cell(row=row_number, column=8).style = "Hyperlink"
     for column in sheet.columns:
         max_length = max(len(str(cell.value or "")) for cell in column)
         sheet.column_dimensions[column[0].column_letter].width = min(max(max_length + 2, 12), 60)

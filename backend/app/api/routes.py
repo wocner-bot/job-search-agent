@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlmodel import Session, select
 
 from app.config import get_settings
@@ -9,6 +9,7 @@ from app.database import get_session
 from app.models import ApplicationMaterial, CandidateProfile, StatusEvent, Vacancy
 from app.schemas import StatusUpdate, VacancyCreate
 from app.services.cv_parser import extract_profile_from_text, read_cv_text
+from app.services.cv_writer import build_master_cv_document, build_tailored_cv_document
 from app.services.exporter import export_zip_package
 from app.services.importer import import_csv_rows, import_xlsx_sheet, normalize_queue_row
 from app.services.materials import generate_materials
@@ -190,9 +191,41 @@ def generate_analysis_from_cv(session: Session = Depends(get_session)) -> dict[s
     session.commit()
 
     for vacancy in session.exec(select(Vacancy).order_by(Vacancy.rank)).all():
+        vacancy.cv_file_path = f"/api/vacancies/{vacancy.id}/tailored-cv.docx"
+        session.add(vacancy)
         session.add(generate_materials(profile, vacancy))
     session.commit()
     return {"generated": len(vacancies), "analyzed": len(vacancies)}
+
+
+@router.get("/candidate/master-cv.docx")
+def download_master_cv(session: Session = Depends(get_session)) -> StreamingResponse:
+    profile = session.exec(select(CandidateProfile).order_by(CandidateProfile.id.desc())).first()
+    if not profile:
+        raise HTTPException(status_code=400, detail="Create a candidate profile first")
+    document = build_master_cv_document(profile)
+    return StreamingResponse(
+        document,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": 'attachment; filename="master_cv_template.docx"'},
+    )
+
+
+@router.get("/vacancies/{vacancy_id}/tailored-cv.docx")
+def download_tailored_cv(vacancy_id: int, session: Session = Depends(get_session)) -> StreamingResponse:
+    profile = session.exec(select(CandidateProfile).order_by(CandidateProfile.id.desc())).first()
+    if not profile:
+        raise HTTPException(status_code=400, detail="Create a candidate profile first")
+    vacancy = session.get(Vacancy, vacancy_id)
+    if not vacancy:
+        raise HTTPException(status_code=404, detail="Vacancy not found")
+    document = build_tailored_cv_document(profile, vacancy)
+    filename = f"{vacancy.external_id}_{vacancy.title}".replace("/", "-").replace(" ", "_")
+    return StreamingResponse(
+        document,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{filename}.docx"'},
+    )
 
 
 @router.get("/materials")

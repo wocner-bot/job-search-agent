@@ -8,6 +8,8 @@ Make the app work from CV input alone. The primary flow is:
 2. User clicks `Подобрать вакансии`.
 3. The app acts as a senior recruiter and generates 20 best-fit target roles.
 4. Each generated row contains a role title, exact matching keywords, fit score, priority, risks, adaptation strategy, and ready-to-send text.
+5. Each generated row links to a role-specific tailored CV document.
+6. The candidate can download a recruiter-safe master CV template for fast future adaptation.
 
 ## Senior Recruiter Rule
 
@@ -37,6 +39,8 @@ Add a recruiter service that:
 - Sets company to `Target role`.
 - Sets `date_status` to `generated from CV, not a live vacancy`.
 - Generates materials through the existing material service.
+- Sets `cv_file_path` to a per-row DOCX endpoint.
+- Provides a master CV template endpoint using Google XYZ bullets and red-flag guardrails.
 
 Add `POST /api/analysis/from-cv`:
 
@@ -50,3 +54,4 @@ Add `POST /api/analysis/from-cv`:
 - No live scraping/search in this change.
 - No automatic applications.
 - No claims that generated rows are active vacancies.
+- No unverified metrics, inflated language levels, unsupported team-size/budget claims, or ML engineering claims in generated CV documents.

@@ -1,4 +1,6 @@
 from fastapi.testclient import TestClient
+from io import BytesIO
+from docx import Document
 from sqlmodel import SQLModel
 
 from app.database import engine
@@ -144,6 +146,61 @@ def test_analysis_from_cv_generates_twenty_recruiter_role_matches():
         materials = client.get("/api/materials").json()
         assert len(materials) == 20
         assert "Lead Product Designer" in materials[0]["short_note"]
+
+
+def test_analysis_from_cv_links_every_row_to_tailored_cv_docx():
+    reset_database()
+    cv_text = (
+        "Aleksandr Grenkov Lead Product Designer Automotive UX HMI Voice UX "
+        "Design Systems Smart City Transport Enterprise UX English B2"
+    )
+    with TestClient(app) as client:
+        client.post("/api/candidate/text", json={"text": cv_text})
+        client.post("/api/analysis/from-cv")
+
+        vacancies = client.get("/api/vacancies").json()
+        assert len(vacancies) == 20
+        assert all(row["cv_file_path"] == f"/api/vacancies/{row['id']}/tailored-cv.docx" for row in vacancies)
+
+        first = vacancies[0]
+        response = client.get(first["cv_file_path"])
+        assert response.status_code == 200
+        assert response.headers["content-type"].startswith("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
+        document = Document(BytesIO(response.content))
+        text = "\n".join(paragraph.text for paragraph in document.paragraphs)
+        assert "ALEKSANDR GRENKOV" in text
+        assert first["title"] in text
+        assert "Google XYZ" in text
+        assert "English B2" in text
+        assert "English C1" not in text
+        assert "increased conversion by" not in text.lower()
+
+
+def test_master_cv_template_docx_is_recruiter_safe_and_adaptable():
+    reset_database()
+    with TestClient(app) as client:
+        client.post(
+            "/api/candidate/text",
+            json={
+                "text": (
+                    "Aleksandr Grenkov Lead Product Designer Automotive UX HMI Voice UX "
+                    "Design Systems Smart City Transport Enterprise UX English B2"
+                )
+            },
+        )
+        response = client.get("/api/candidate/master-cv.docx")
+        assert response.status_code == 200
+
+        document = Document(BytesIO(response.content))
+        text = "\n".join(paragraph.text for paragraph in document.paragraphs)
+        assert "MASTER CV TEMPLATE" in text
+        assert "[ROLE]" in text
+        assert "[COMPANY]" in text
+        assert "Google XYZ" in text
+        assert "English B2" in text
+        assert "English C1" not in text
+        assert "worked on" not in text.lower()
 
 
 def test_candidate_upload_sanitizes_filename(tmp_path, monkeypatch):
