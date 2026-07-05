@@ -68,7 +68,7 @@ export function CvIntake({
           placeholder="Вставьте сюда CV, если не хотите загружать файл"
         />
       </label>
-      <div className="upload-grid single-upload">
+      <div className="upload-actions">
         <label className="upload-box">
           <span>
             <Upload size={16} aria-hidden="true" /> CV файлом
@@ -76,10 +76,10 @@ export function CvIntake({
           <input type="file" accept=".txt,.pdf,.docx" onChange={(event) => onCvFileChange(event.target.files?.[0] ?? null)} />
           <strong>{cvFileName || "PDF, DOCX или TXT"}</strong>
         </label>
+        <button className="primary-action match-button" type="button" onClick={onMatch} disabled={isMatching}>
+          <Sparkles size={18} aria-hidden="true" /> {isMatching ? "Подбираю..." : "Подобрать вакансии"}
+        </button>
       </div>
-      <button className="primary-action" type="button" onClick={onMatch} disabled={isMatching}>
-        <Sparkles size={18} aria-hidden="true" /> {isMatching ? "Подбираю..." : "Подобрать вакансии"}
-      </button>
       <div className="vacancy-source-form">
         <div className="match-copy">
           <h2>Добавить реальную вакансию</h2>

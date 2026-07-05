@@ -1,6 +1,12 @@
 import { apiUrl } from "../api.ts";
 import type { Vacancy } from "../types";
 
+function sourceTextPreview(vacancy: Vacancy): string {
+  const sourceText = vacancy.description_raw || vacancy.requirements || vacancy.responsibilities || vacancy.source_url;
+  if (!sourceText) return "";
+  return sourceText.length > 120 ? `${sourceText.slice(0, 117)}...` : sourceText;
+}
+
 export function VacancyTable({ vacancies, selectedId, onSelect }: { vacancies: Vacancy[]; selectedId?: number; onSelect: (vacancy: Vacancy) => void }) {
   return (
     <table className="queue-table">
@@ -8,6 +14,7 @@ export function VacancyTable({ vacancies, selectedId, onSelect }: { vacancies: V
         <tr>
           <th>Rank</th>
           <th>Source</th>
+          <th>Source Text</th>
           <th>Company</th>
           <th>Vacancy</th>
           <th>Fit</th>
@@ -28,6 +35,9 @@ export function VacancyTable({ vacancies, selectedId, onSelect }: { vacancies: V
               ) : (
                 vacancy.source
               )}
+            </td>
+            <td className="source-text" title={vacancy.description_raw || vacancy.requirements || vacancy.responsibilities || vacancy.source_url}>
+              {sourceTextPreview(vacancy)}
             </td>
             <td>{vacancy.company}</td>
             <td>{vacancy.title}</td>

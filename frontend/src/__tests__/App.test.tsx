@@ -11,6 +11,8 @@ assert.match(html, /Вставьте CV текстом/);
 assert.doesNotMatch(html, /Файл с вакансиями/);
 assert.match(html, /20 должностей/);
 assert.match(html, /Подобрать вакансии/);
+assert.match(html, /upload-actions/);
+assert.match(html, /Source Text/);
 assert.match(html, /Tailored CV/);
 assert.match(html, /Master CV Template/);
 assert.match(html, /Добавить реальную вакансию/);

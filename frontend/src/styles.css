@@ -144,6 +144,13 @@ textarea {
   max-width: 520px;
 }
 
+.upload-actions {
+  align-items: stretch;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(260px, 520px) minmax(220px, 300px);
+}
+
 .upload-box {
   border: 1px solid #c7d0da;
   border-radius: 8px;
@@ -173,6 +180,10 @@ textarea {
 .primary-action:disabled {
   cursor: wait;
   opacity: 0.72;
+}
+
+.match-button {
+  align-self: stretch;
 }
 
 .secondary-action {
@@ -208,6 +219,10 @@ textarea {
 
 @media (max-width: 760px) {
   .upload-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .upload-actions {
     grid-template-columns: 1fr;
   }
 
@@ -298,6 +313,12 @@ button:hover,
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+}
+
+.queue-table .source-text {
+  color: #4f5f70;
+  max-width: 280px;
+  overflow-wrap: anywhere;
 }
 
 .queue-table th,
