@@ -11,36 +11,87 @@ SAFE_ACTION_VERBS = ("Led", "Defined", "Established", "Structured", "Simplified"
 
 def build_master_cv_document(profile: CandidateProfile) -> BytesIO:
     document = _base_document()
-    _add_title(document, "ALEKSANDR GRENKOV", "MASTER CV TEMPLATE")
-    document.add_paragraph("Adapt quickly by replacing [ROLE], [COMPANY], [DOMAIN], and [KEYWORDS].")
-    document.add_heading("Positioning", level=2)
+    _add_title(document, "ALEKSANDR GRENKOV", "ATS-OPTIMIZED MASTER CV TEMPLATE")
+    document.add_heading("Contact", level=2)
+    document.add_paragraph("Email | LinkedIn | Portfolio | Telegram | Location/relocation: [TARGET LOCATION]")
+    document.add_heading("Target Title", level=2)
+    document.add_paragraph("[TARGET ROLE] / [ROLE] at [COMPANY]")
+    document.add_heading("Professional Summary", level=2)
     document.add_paragraph(
         "Lead Product Designer with 10+ years across product design, UX strategy, design systems, "
         "telecom, e-commerce, automotive UX, smart city systems, enterprise interfaces, voice UX, "
-        "sound design, and AI-related interaction design."
+        "sound design, and AI-related interaction design. Adapt this summary with [DOMAIN KEYWORDS] "
+        "and [VACANCY KEYWORDS] while keeping all claims evidence-based."
     )
-    document.add_heading("Target Headline", level=2)
-    document.add_paragraph("[ROLE] — [DOMAIN], product UX, design systems, and complex interaction logic")
-    document.add_heading("Google XYZ Bullet Formula", level=2)
-    document.add_paragraph("Use: Accomplished [X], as measured by [Y], by doing [Z].")
-    document.add_paragraph("If [Y] is not verified, do not invent metrics. Use truthful impact-oriented wording.")
-    document.add_heading("Recruiter-Safe Experience Bullets", level=2)
-    _add_bullets(
-        document,
-        [
-            "Established a scalable voice interaction framework by defining intents, prompts, tone of voice, and multimodal patterns for in-car assistant scenarios.",
-            "Structured in-vehicle UX logic by mapping customer journeys, information architecture, and reusable interaction patterns for HMI scenarios.",
-            "Standardized complex product interfaces by developing design-system practices, reusable UI patterns, and cross-functional design review rituals.",
-            "Simplified city-scale operator workflows by designing dashboards, parking apps, and transport-system interfaces for monitoring and control scenarios.",
-            "Partnered with product, engineering, research, and external design teams to translate ambiguous requirements into clear user flows and production-ready interfaces.",
-        ],
+    document.add_heading("Target Keywords", level=2)
+    document.add_paragraph(
+        "[VACANCY KEYWORDS]; [DOMAIN KEYWORDS]; Product Design; UX Strategy; UX/UI Design; "
+        "Design Systems; Voice UX; Conversational Design; Automotive UX; HMI; Enterprise UX; "
+        "B2B; B2C; Mobile UX; Design Leadership"
     )
     document.add_heading("Core Skills", level=2)
     document.add_paragraph(
-        "Product Design; UX Strategy; UX/UI; Design Systems; Voice UX; Conversational Design; Prompt Writing; "
-        "Intent Design; Automotive UX; HMI; AVAS; Smart City UX; Transport Systems; Enterprise UX; "
-        "Telecom Products; B2B/B2C; Mobile UX; Design Leadership; Mentoring."
+        "Product Design; UX Strategy; Information Architecture; User Flows; Prototyping; "
+        "Design Systems; Design Review; UX Research; CJM; Mobile UX; Dashboard UX; "
+        "Cross-functional Collaboration; Mentoring"
     )
+    document.add_heading("Domain Expertise", level=2)
+    document.add_paragraph(
+        "Automotive UX; HMI; In-vehicle UX; Voice Assistant UX; Sound Identity; AVAS; "
+        "Smart City UX; Transport Systems; Parking Management; Telecom Products; "
+        "Enterprise Platforms; B2B/B2C Digital Products"
+    )
+    document.add_heading("Google XYZ Bullet Formula", level=2)
+    document.add_paragraph("Use: Accomplished [X], as measured by [Y], by doing [Z].")
+    document.add_paragraph("If [Y] is not verified, do not invent metrics. Use truthful impact-oriented wording.")
+    document.add_heading("Professional Experience", level=2)
+    _add_experience_template(
+        document,
+        "Lead Product Designer — ATOM, Electric Vehicle Startup | 2023-2026",
+        [
+            "Established a scalable voice interaction framework by defining intents, prompts, tone of voice, and multimodal patterns for in-car assistant scenarios.",
+            "Structured in-vehicle UX logic by mapping customer journeys, information architecture, and reusable interaction patterns for HMI scenarios.",
+            "Defined product UX for sound identity, AVAS, and internal sound indication systems by partnering with engineering and research teams.",
+        ],
+    )
+    _add_experience_template(
+        document,
+        "Product Designer — Information Technology Factory | 2022-2023",
+        [
+            "Simplified city-scale operator workflows by designing dashboards, parking apps, and transport-system interfaces for monitoring and control scenarios.",
+            "Created mobile parking app experiences by translating research, user flows, and information architecture into Android and iOS interfaces.",
+        ],
+    )
+    _add_experience_template(
+        document,
+        "Lead Product Designer — VEON / Beeline Russia",
+        [
+            "Standardized complex product interfaces by developing design-system practices, reusable UI patterns, and cross-functional design review rituals.",
+            "Partnered with product, engineering, research, and external design teams to translate ambiguous requirements into clear user flows and production-ready interfaces.",
+        ],
+    )
+    _add_experience_template(
+        document,
+        "Product Designer — ABBYY Software House",
+        [
+            "Designed UI/UX for international software products by structuring product flows and interface patterns for Lingvo and PDF Transformer scenarios.",
+        ],
+    )
+    document.add_heading("Selected Projects", level=2)
+    _add_bullets(
+        document,
+        [
+            "In-car voice assistant and HMI interaction logic — adapt with [VACANCY KEYWORDS] for automotive, AI, voice, or HMI roles.",
+            "Smart city and transport dashboards — adapt with [DOMAIN KEYWORDS] for enterprise, mobility, transport, or operator UX roles.",
+            "Telecom B2B/B2C product and design-system work — adapt for design systems, platform UX, and complex product roles.",
+        ],
+    )
+    document.add_heading("Education", level=2)
+    document.add_paragraph("[EDUCATION] — keep factual, short, and ATS-readable.")
+    document.add_heading("Languages", level=2)
+    document.add_paragraph("Russian: native; English B2")
+    document.add_heading("Tools", level=2)
+    document.add_paragraph("Figma; Prototyping; Design Systems; UX Research; Information Architecture; CJM; Jira; Confluence; Adobe tools")
     document.add_heading("Red Flag Guardrails", level=2)
     _add_bullets(
         document,
@@ -113,6 +164,12 @@ def _add_bullets(document: Document, items: list[str]) -> None:
         if item.strip():
             paragraph = document.add_paragraph(style="List Bullet")
             paragraph.add_run(item.strip())
+
+
+def _add_experience_template(document: Document, heading: str, bullets: list[str]) -> None:
+    paragraph = document.add_paragraph()
+    paragraph.add_run(heading).bold = True
+    _add_bullets(document, bullets)
 
 
 def _split_keywords(value: str) -> list[str]:

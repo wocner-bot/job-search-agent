@@ -194,9 +194,27 @@ def test_master_cv_template_docx_is_recruiter_safe_and_adaptable():
 
         document = Document(BytesIO(response.content))
         text = "\n".join(paragraph.text for paragraph in document.paragraphs)
-        assert "MASTER CV TEMPLATE" in text
+        assert "ATS-OPTIMIZED MASTER CV TEMPLATE" in text
+        assert len(document.tables) == 0
+        for section in [
+            "Contact",
+            "Target Title",
+            "Professional Summary",
+            "Target Keywords",
+            "Core Skills",
+            "Domain Expertise",
+            "Professional Experience",
+            "Selected Projects",
+            "Education",
+            "Languages",
+            "Tools",
+        ]:
+            assert section in text
+        assert "[TARGET ROLE]" in text
         assert "[ROLE]" in text
         assert "[COMPANY]" in text
+        assert "[DOMAIN KEYWORDS]" in text
+        assert "[VACANCY KEYWORDS]" in text
         assert "Google XYZ" in text
         assert "English B2" in text
         assert "English C1" not in text
