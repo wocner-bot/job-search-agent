@@ -108,6 +108,44 @@ def test_candidate_analysis_materials_and_export_flow():
         assert export_response.headers["content-type"] == "application/zip"
 
 
+def test_analysis_from_cv_requires_candidate_profile():
+    reset_database()
+    with TestClient(app) as client:
+        response = client.post("/api/analysis/from-cv")
+        assert response.status_code == 400
+        assert response.json()["detail"] == "Create a candidate profile first"
+
+
+def test_analysis_from_cv_generates_twenty_recruiter_role_matches():
+    reset_database()
+    cv_text = (
+        "Aleksandr Grenkov Lead Product Designer Automotive UX HMI Voice UX "
+        "Conversational Design Design Systems Smart City Transport Enterprise UX "
+        "Telecom B2B B2C Mobile UX English B2"
+    )
+    with TestClient(app) as client:
+        candidate_response = client.post("/api/candidate/text", json={"text": cv_text})
+        assert candidate_response.status_code == 200
+
+        response = client.post("/api/analysis/from-cv")
+        assert response.status_code == 200
+        assert response.json() == {"generated": 20, "analyzed": 20}
+
+        vacancies = client.get("/api/vacancies").json()
+        assert len(vacancies) == 20
+        assert vacancies[0]["source"] == "CV Recruiter Match"
+        assert vacancies[0]["company"] == "Target role"
+        assert vacancies[0]["date_status"] == "generated from CV, not a live vacancy"
+        assert vacancies[0]["title"] == "Lead Product Designer"
+        assert "Product Design" in vacancies[0]["top_match_keywords"]
+        assert "English B2" in vacancies[0]["gaps_risks"]
+        assert {row["rank"] for row in vacancies} == set(range(1, 21))
+
+        materials = client.get("/api/materials").json()
+        assert len(materials) == 20
+        assert "Lead Product Designer" in materials[0]["short_note"]
+
+
 def test_candidate_upload_sanitizes_filename(tmp_path, monkeypatch):
     reset_database()
     from app.config import get_settings

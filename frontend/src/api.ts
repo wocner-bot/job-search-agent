@@ -43,6 +43,7 @@ export const api = {
   createCandidateFromText: (text: string) => request("/api/candidate/text", { method: "POST", body: JSON.stringify({ text }) }),
   uploadCandidateCv: (file: File) => upload("/api/candidate/upload", file),
   uploadVacancyFile: (file: File) => upload<{ imported: number }>("/api/imports/vacancies/upload", file),
+  generateMatchesFromCv: () => request<{ generated: number; analyzed: number }>("/api/analysis/from-cv", { method: "POST" }),
   runAnalysis: () => request<{ analyzed: number }>("/api/analysis/run", { method: "POST" }),
   materials: () => request<ApplicationMaterial[]>("/api/materials")
 };

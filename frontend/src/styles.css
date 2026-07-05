@@ -139,6 +139,11 @@ textarea {
   gap: 12px;
 }
 
+.upload-grid.single-upload {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 520px;
+}
+
 .upload-box {
   border: 1px solid #c7d0da;
   border-radius: 8px;

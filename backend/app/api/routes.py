@@ -12,6 +12,7 @@ from app.services.cv_parser import extract_profile_from_text, read_cv_text
 from app.services.exporter import export_zip_package
 from app.services.importer import import_csv_rows, import_xlsx_sheet, normalize_queue_row
 from app.services.materials import generate_materials
+from app.services.recruiter import generate_role_recommendations
 from app.services.scoring import score_vacancy
 from app.status import assert_status_change_allowed
 
@@ -167,6 +168,31 @@ def run_analysis(session: Session = Depends(get_session)) -> dict[str, int]:
         session.add(material)
     session.commit()
     return {"analyzed": len(vacancies)}
+
+
+@router.post("/analysis/from-cv")
+def generate_analysis_from_cv(session: Session = Depends(get_session)) -> dict[str, int]:
+    profile = session.exec(select(CandidateProfile).order_by(CandidateProfile.id.desc())).first()
+    if not profile:
+        raise HTTPException(status_code=400, detail="Create a candidate profile first")
+
+    for material in session.exec(select(ApplicationMaterial)).all():
+        session.delete(material)
+    for event in session.exec(select(StatusEvent)).all():
+        session.delete(event)
+    for vacancy in session.exec(select(Vacancy)).all():
+        session.delete(vacancy)
+    session.commit()
+
+    vacancies = generate_role_recommendations(profile)
+    for vacancy in vacancies:
+        session.add(vacancy)
+    session.commit()
+
+    for vacancy in session.exec(select(Vacancy).order_by(Vacancy.rank)).all():
+        session.add(generate_materials(profile, vacancy))
+    session.commit()
+    return {"generated": len(vacancies), "analyzed": len(vacancies)}
 
 
 @router.get("/materials")

@@ -12,7 +12,6 @@ import type { ApplicationMaterial, ApplicationStatus, Vacancy } from "./types.ts
 export default function App() {
   const [cvText, setCvText] = useState("");
   const [cvFile, setCvFile] = useState<File | null>(null);
-  const [vacancyFile, setVacancyFile] = useState<File | null>(null);
   const [isMatching, setIsMatching] = useState(false);
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [materials, setMaterials] = useState<ApplicationMaterial[]>([]);
@@ -48,22 +47,17 @@ export default function App() {
       setMessage("Добавьте CV текстом или файлом.");
       return;
     }
-    if (!vacancyFile) {
-      setMessage("Загрузите файл с вакансиями.");
-      return;
-    }
     setIsMatching(true);
-    setMessage("Подбираю вакансии...");
+    setMessage("Анализирую CV и подбираю 20 должностей...");
     try {
       if (cvFile) {
         await api.uploadCandidateCv(cvFile);
       } else {
         await api.createCandidateFromText(cvText);
       }
-      const imported = await api.uploadVacancyFile(vacancyFile);
-      const analyzed = await api.runAnalysis();
+      const analyzed = await api.generateMatchesFromCv();
       await refresh();
-      setMessage(`Готово: импортировано ${imported.imported}, проанализировано ${analyzed.analyzed}.`);
+      setMessage(`Готово: подобрано ${analyzed.generated} должностей, проанализировано ${analyzed.analyzed}.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Не удалось подобрать вакансии.");
     } finally {
@@ -92,11 +86,9 @@ export default function App() {
       <CvIntake
         cvText={cvText}
         cvFileName={cvFile?.name ?? ""}
-        vacancyFileName={vacancyFile?.name ?? ""}
         isMatching={isMatching}
         onCvTextChange={setCvText}
         onCvFileChange={setCvFile}
-        onVacancyFileChange={setVacancyFile}
         onMatch={matchVacancies}
       />
       <MetricsStrip vacancies={vacancies} />
