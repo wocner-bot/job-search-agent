@@ -15,6 +15,20 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+async function upload<T>(path: string, file: File): Promise<T> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    body: formData
+  });
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || response.statusText);
+  }
+  return response.json() as Promise<T>;
+}
+
 export const api = {
   health: () => request<{ status: string; service: string }>("/api/health"),
   vacancies: () => request<Vacancy[]>("/api/vacancies"),
@@ -27,6 +41,8 @@ export const api = {
     }),
   importCurrentPackage: () => request<{ imported: number }>("/api/imports/current-package", { method: "POST" }),
   createCandidateFromText: (text: string) => request("/api/candidate/text", { method: "POST", body: JSON.stringify({ text }) }),
+  uploadCandidateCv: (file: File) => upload("/api/candidate/upload", file),
+  uploadVacancyFile: (file: File) => upload<{ imported: number }>("/api/imports/vacancies/upload", file),
   runAnalysis: () => request<{ analyzed: number }>("/api/analysis/run", { method: "POST" }),
   materials: () => request<ApplicationMaterial[]>("/api/materials")
 };

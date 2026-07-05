@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "./api.ts";
 import { CvIntake } from "./components/CvIntake.tsx";
 import { ExportBar } from "./components/ExportBar.tsx";
-import { ImportPanel } from "./components/ImportPanel.tsx";
 import { Layout } from "./components/Layout.tsx";
 import { MetricsStrip } from "./components/MetricsStrip.tsx";
 import { type Filters, VacancyFilters } from "./components/VacancyFilters.tsx";
@@ -12,6 +11,9 @@ import type { ApplicationMaterial, ApplicationStatus, Vacancy } from "./types.ts
 
 export default function App() {
   const [cvText, setCvText] = useState("");
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [vacancyFile, setVacancyFile] = useState<File | null>(null);
+  const [isMatching, setIsMatching] = useState(false);
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [materials, setMaterials] = useState<ApplicationMaterial[]>([]);
   const [selected, setSelected] = useState<Vacancy | undefined>();
@@ -41,21 +43,32 @@ export default function App() {
     [filters, vacancies]
   );
 
-  async function saveCv() {
-    await api.createCandidateFromText(cvText);
-    setMessage("CV profile saved.");
-  }
-
-  async function importPackage() {
-    const result = await api.importCurrentPackage();
-    setMessage(`Imported ${result.imported} vacancies.`);
-    await refresh();
-  }
-
-  async function runAnalysis() {
-    const result = await api.runAnalysis();
-    setMessage(`Analyzed ${result.analyzed} vacancies.`);
-    await refresh();
+  async function matchVacancies() {
+    if (!cvText.trim() && !cvFile) {
+      setMessage("Добавьте CV текстом или файлом.");
+      return;
+    }
+    if (!vacancyFile) {
+      setMessage("Загрузите файл с вакансиями.");
+      return;
+    }
+    setIsMatching(true);
+    setMessage("Подбираю вакансии...");
+    try {
+      if (cvFile) {
+        await api.uploadCandidateCv(cvFile);
+      } else {
+        await api.createCandidateFromText(cvText);
+      }
+      const imported = await api.uploadVacancyFile(vacancyFile);
+      const analyzed = await api.runAnalysis();
+      await refresh();
+      setMessage(`Готово: импортировано ${imported.imported}, проанализировано ${analyzed.analyzed}.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Не удалось подобрать вакансии.");
+    } finally {
+      setIsMatching(false);
+    }
   }
 
   async function updateStatus(status: ApplicationStatus) {
@@ -71,14 +84,22 @@ export default function App() {
     <Layout>
       <header className="workspace-header">
         <div>
-          <h1>Vacancy Queue</h1>
-          <p>Ready-to-send application workspace for tailored CVs and recruiter messages.</p>
+          <h1>Job Search Agent</h1>
+          <p>CV-first workspace for matching vacancies and preparing ready-to-send materials.</p>
         </div>
       </header>
       {message && <div className="notice">{message}</div>}
-      <ImportPanel onImport={importPackage} onAnalyze={runAnalysis} />
+      <CvIntake
+        cvText={cvText}
+        cvFileName={cvFile?.name ?? ""}
+        vacancyFileName={vacancyFile?.name ?? ""}
+        isMatching={isMatching}
+        onCvTextChange={setCvText}
+        onCvFileChange={setCvFile}
+        onVacancyFileChange={setVacancyFile}
+        onMatch={matchVacancies}
+      />
       <MetricsStrip vacancies={vacancies} />
-      <CvIntake value={cvText} onChange={setCvText} onSubmit={saveCv} />
       <section id="queue" className="queue-layout">
         <div className="panel">
           <div className="panel-header">
