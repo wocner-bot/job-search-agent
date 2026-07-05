@@ -119,7 +119,13 @@ def build_tailored_cv_document(profile: CandidateProfile, vacancy: Vacancy) -> B
         "telecom, B2B/B2C products, and mobile UX. English B2."
     )
     document.add_heading("Exact Match Keywords", level=2)
-    _add_bullets(document, _split_keywords(vacancy.top_match_keywords))
+    _add_bullets(document, _split_keywords(vacancy.top_match_keywords or vacancy.vacancy_keywords))
+    if vacancy.requirements:
+        document.add_heading("Vacancy Requirements Mirrored", level=2)
+        _add_bullets(document, _split_keywords(vacancy.requirements))
+    if vacancy.responsibilities:
+        document.add_heading("Vacancy Responsibilities Mirrored", level=2)
+        _add_bullets(document, _split_keywords(vacancy.responsibilities))
     document.add_heading("Google XYZ Tailored Bullets", level=2)
     _add_bullets(document, _tailored_bullets(vacancy))
     document.add_heading("Selected Experience", level=2)
@@ -132,6 +138,11 @@ def build_tailored_cv_document(profile: CandidateProfile, vacancy: Vacancy) -> B
     document.add_heading("Recruiter-Safe Notes", level=2)
     document.add_paragraph(vacancy.gaps_risks)
     document.add_paragraph("No unverified metrics, no inflated language claim, no engineering claim outside product/UX ownership, no application-sent claim.")
+    document.add_heading("Vacancy Source", level=2)
+    document.add_paragraph(f"Source: {vacancy.source or 'Manual'}")
+    document.add_paragraph(f"URL: {vacancy.source_url or 'Generated target role; verify a live vacancy before sending.'}")
+    if vacancy.description_raw:
+        document.add_paragraph(f"Source text excerpt: {vacancy.description_raw[:1200]}")
     document.add_heading("Vacancy Link", level=2)
     document.add_paragraph(vacancy.source_url or "Generated target role; verify a live vacancy before sending.")
     return _save(document)
@@ -177,7 +188,15 @@ def _split_keywords(value: str) -> list[str]:
 
 
 def _tailored_bullets(vacancy: Vacancy) -> list[str]:
-    keywords = vacancy.top_match_keywords.lower()
+    keywords = " ".join(
+        [
+            vacancy.top_match_keywords,
+            vacancy.vacancy_keywords,
+            vacancy.description_raw,
+            vacancy.requirements,
+            vacancy.responsibilities,
+        ]
+    ).lower()
     bullets = [
         f"Established a tailored {vacancy.title} positioning by mapping the role keywords to verified product design, UX strategy, and design-system experience.",
         "Structured complex user journeys by translating product, engineering, and research inputs into information architecture, prototypes, and reusable interaction patterns.",

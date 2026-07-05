@@ -19,10 +19,27 @@ export interface Vacancy {
   pdf_file_path: string;
   png_preview_path: string;
   source_url: string;
+  description_raw: string;
+  requirements: string;
+  responsibilities: string;
+  vacancy_keywords: string;
   tailored_headline: string;
   top_match_keywords: string;
   gaps_risks: string;
   adaptation_strategy: string;
+}
+
+export interface VacancyDraft {
+  external_id: string;
+  source: string;
+  company: string;
+  title: string;
+  location: string;
+  language: string;
+  source_url: string;
+  description_raw: string;
+  requirements: string;
+  responsibilities: string;
 }
 
 export interface ApplicationMaterial {

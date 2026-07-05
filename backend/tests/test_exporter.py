@@ -44,6 +44,8 @@ def test_export_queue_xlsx_writes_workbook(tmp_path):
                 title="Automotive Designer",
                 cv_file_path="/api/vacancies/1/tailored-cv.docx",
                 source_url="https://example.com",
+                description_raw="Original vacancy text",
+                vacancy_keywords="Automotive UX; HMI",
             )
         ],
     )
@@ -51,8 +53,9 @@ def test_export_queue_xlsx_writes_workbook(tmp_path):
     assert output.suffix == ".xlsx"
     workbook = load_workbook(output)
     sheet = workbook["Application Queue"]
-    assert sheet["G2"].hyperlink.target == "/api/vacancies/1/tailored-cv.docx"
-    assert sheet["H2"].hyperlink.target == "https://example.com"
+    assert sheet["H2"].hyperlink.target == "/api/vacancies/1/tailored-cv.docx"
+    assert sheet["I2"].hyperlink.target == "https://example.com"
+    assert sheet["K2"].value == "Original vacancy text"
 
 
 def test_export_zip_package_contains_html_and_csv(tmp_path):

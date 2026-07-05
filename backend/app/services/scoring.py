@@ -38,6 +38,10 @@ def score_vacancy(profile: CandidateProfile, vacancy: Vacancy) -> ScoreResult:
             profile.target_titles,
             profile.experience_areas,
             vacancy.title,
+            vacancy.description_raw,
+            vacancy.requirements,
+            vacancy.responsibilities,
+            vacancy.vacancy_keywords,
             vacancy.top_match_keywords,
             vacancy.tailored_headline,
             vacancy.adaptation_strategy,
@@ -54,9 +58,12 @@ def score_vacancy(profile: CandidateProfile, vacancy: Vacancy) -> ScoreResult:
     if vacancy.language and "english" in vacancy.language.lower() and "English B2" in profile.languages:
         raw_score += 3
     score = min(100, max(0, raw_score))
-    matched = "; ".join(matched_categories)
+    matched_parts = matched_categories[:]
+    if vacancy.vacancy_keywords:
+        matched_parts.extend(keyword.strip() for keyword in vacancy.vacancy_keywords.split(";") if keyword.strip())
+    matched = "; ".join(dict.fromkeys(matched_parts))
     gaps = vacancy.gaps_risks or "Verify live vacancy status and add true metrics before sending."
-    strategy = vacancy.adaptation_strategy or f"Lead with {matched or 'Product Design'} experience and keep claims factual."
+    strategy = vacancy.adaptation_strategy or f"Adapt CV to {vacancy.title}: mirror {matched or 'Product Design'} keywords, use vacancy language, and keep claims factual."
     return ScoreResult(
         fit_score=score,
         priority=priority_for_score(score),

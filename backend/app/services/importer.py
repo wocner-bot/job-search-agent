@@ -6,6 +6,7 @@ from openpyxl import load_workbook
 
 from app.models import ApplicationMaterial, Vacancy
 from app.services.assets import pdf_path_for_cv, png_preview_path_for_cv
+from app.services.vacancy_analysis import extract_vacancy_keywords
 from app.status import ApplicationStatus
 
 
@@ -75,6 +76,16 @@ def normalize_queue_row(row: dict[str, Any], package_root: Path) -> Vacancy:
     cv_file_path = _value(row.get("CV File Path"))
     submit_status = _value(row.get("Submit Status"))
     status = ApplicationStatus.READY_TO_SEND if submit_status in READY_STATUS_ALIASES else ApplicationStatus.DRAFT
+    description_raw = _value(row.get("Description")) or _value(row.get("Description Raw")) or _value(row.get("Vacancy Text"))
+    requirements = _value(row.get("Requirements"))
+    responsibilities = _value(row.get("Responsibilities"))
+    vacancy_keywords = _value(row.get("Vacancy Keywords")) or extract_vacancy_keywords(
+        _value(row.get("Vacancy")),
+        description_raw,
+        requirements,
+        responsibilities,
+        _value(row.get("Top Match Keywords")),
+    )
     return Vacancy(
         external_id=_value(row.get("ID")),
         rank=_int_value(row.get("Rank"), default=0) or None,
@@ -93,8 +104,12 @@ def normalize_queue_row(row: dict[str, Any], package_root: Path) -> Vacancy:
         pdf_file_path=pdf_path_for_cv(cv_file_path),
         png_preview_path=png_preview_path_for_cv(cv_file_path),
         source_url=_value(row.get("Source URL")) or _value(row.get("Vacancy Link")),
+        description_raw=description_raw,
+        requirements=requirements,
+        responsibilities=responsibilities,
+        vacancy_keywords=vacancy_keywords,
         tailored_headline=_value(row.get("Tailored Headline")),
-        top_match_keywords=_value(row.get("Top Match Keywords")),
+        top_match_keywords=_value(row.get("Top Match Keywords")) or vacancy_keywords,
         gaps_risks=_value(row.get("Gaps / Risks")),
         adaptation_strategy=_value(row.get("Adaptation Strategy")),
     )

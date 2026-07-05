@@ -13,11 +13,26 @@ def export_queue_csv(output_dir: Path, vacancies: list[Vacancy]) -> Path:
     path = output_dir / "application_queue.csv"
     with path.open("w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
-        writer.writerow(["ID", "Company", "Vacancy", "Priority", "Fit", "Status", "CV File Path", "Source URL"])
+        writer.writerow([
+            "ID",
+            "Source",
+            "Company",
+            "Vacancy",
+            "Priority",
+            "Fit",
+            "Status",
+            "CV File Path",
+            "Source URL",
+            "Vacancy Keywords",
+            "Vacancy Source Text",
+            "Requirements",
+            "Responsibilities",
+        ])
         for vacancy in vacancies:
             writer.writerow(
                 [
                     vacancy.external_id,
+                    vacancy.source,
                     vacancy.company,
                     vacancy.title,
                     vacancy.priority,
@@ -25,6 +40,10 @@ def export_queue_csv(output_dir: Path, vacancies: list[Vacancy]) -> Path:
                     vacancy.submit_status,
                     vacancy.cv_file_path,
                     vacancy.source_url,
+                    vacancy.vacancy_keywords,
+                    vacancy.description_raw,
+                    vacancy.requirements,
+                    vacancy.responsibilities,
                 ]
             )
     return path
@@ -40,6 +59,7 @@ def export_queue_html(output_dir: Path, vacancies: list[Vacancy]) -> Path:
         rows.append(
             "<tr>"
             f"<td>{html.escape(vacancy.external_id)}</td>"
+            f"<td>{html.escape(vacancy.source)}</td>"
             f"<td>{html.escape(vacancy.company)}</td>"
             f"<td>{html.escape(vacancy.title)}</td>"
             f"<td>{html.escape(vacancy.priority)}</td>"
@@ -50,7 +70,7 @@ def export_queue_html(output_dir: Path, vacancies: list[Vacancy]) -> Path:
     path.write_text(
         '<!doctype html><html><head><meta charset="utf-8"><title>Ready-to-send applications</title></head>'
         "<body><h1>Ready-to-send applications</h1><table>"
-        "<thead><tr><th>ID</th><th>Company</th><th>Vacancy</th><th>Priority</th><th>CV</th><th>Vacancy</th></tr></thead>"
+        "<thead><tr><th>ID</th><th>Source</th><th>Company</th><th>Vacancy</th><th>Priority</th><th>CV</th><th>Vacancy</th></tr></thead>"
         f"<tbody>{''.join(rows)}</tbody></table></body></html>",
         encoding="utf-8",
     )
@@ -63,11 +83,26 @@ def export_queue_xlsx(output_dir: Path, vacancies: list[Vacancy]) -> Path:
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = "Application Queue"
-    sheet.append(["ID", "Company", "Vacancy", "Priority", "Fit", "Status", "CV File Path", "Source URL"])
+    sheet.append([
+        "ID",
+        "Source",
+        "Company",
+        "Vacancy",
+        "Priority",
+        "Fit",
+        "Status",
+        "CV File Path",
+        "Source URL",
+        "Vacancy Keywords",
+        "Vacancy Source Text",
+        "Requirements",
+        "Responsibilities",
+    ])
     for vacancy in vacancies:
         sheet.append(
             [
                 vacancy.external_id,
+                vacancy.source,
                 vacancy.company,
                 vacancy.title,
                 vacancy.priority,
@@ -75,15 +110,19 @@ def export_queue_xlsx(output_dir: Path, vacancies: list[Vacancy]) -> Path:
                 str(vacancy.submit_status),
                 vacancy.cv_file_path,
                 vacancy.source_url,
+                vacancy.vacancy_keywords,
+                vacancy.description_raw,
+                vacancy.requirements,
+                vacancy.responsibilities,
             ]
         )
         row_number = sheet.max_row
         if vacancy.cv_file_path:
-            sheet.cell(row=row_number, column=7).hyperlink = vacancy.cv_file_path
-            sheet.cell(row=row_number, column=7).style = "Hyperlink"
-        if vacancy.source_url:
-            sheet.cell(row=row_number, column=8).hyperlink = vacancy.source_url
+            sheet.cell(row=row_number, column=8).hyperlink = vacancy.cv_file_path
             sheet.cell(row=row_number, column=8).style = "Hyperlink"
+        if vacancy.source_url:
+            sheet.cell(row=row_number, column=9).hyperlink = vacancy.source_url
+            sheet.cell(row=row_number, column=9).style = "Hyperlink"
     for column in sheet.columns:
         max_length = max(len(str(cell.value or "")) for cell in column)
         sheet.column_dimensions[column[0].column_letter].width = min(max(max_length + 2, 12), 60)

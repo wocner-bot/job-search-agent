@@ -41,6 +41,9 @@ Add a recruiter service that:
 - Generates materials through the existing material service.
 - Sets `cv_file_path` to a per-row DOCX endpoint.
 - Provides a master CV template endpoint using Google XYZ bullets and red-flag guardrails.
+- Supports real vacancy rows with `description_raw`, `requirements`, `responsibilities`, and `vacancy_keywords`.
+- The summary table must show the vacancy source and link back to the source URL.
+- Tailored CV generation must mirror real vacancy requirements when a source vacancy is provided.
 
 Add `POST /api/analysis/from-cv`:
 

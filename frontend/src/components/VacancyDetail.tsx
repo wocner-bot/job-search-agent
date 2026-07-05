@@ -26,6 +26,10 @@ export function VacancyDetail({
         </select>
       </label>
       <dl>
+        <dt>Source</dt>
+        <dd>{vacancy.source}</dd>
+        <dt>Vacancy keywords</dt>
+        <dd>{vacancy.vacancy_keywords}</dd>
         <dt>Headline</dt>
         <dd>{vacancy.tailored_headline}</dd>
         <dt>Keywords</dt>
@@ -34,6 +38,12 @@ export function VacancyDetail({
         <dd>{vacancy.gaps_risks}</dd>
         <dt>Strategy</dt>
         <dd>{vacancy.adaptation_strategy}</dd>
+        <dt>Vacancy source text</dt>
+        <dd>{vacancy.description_raw || "No source text saved yet."}</dd>
+        <dt>Requirements</dt>
+        <dd>{vacancy.requirements || "No requirements saved yet."}</dd>
+        <dt>Responsibilities</dt>
+        <dd>{vacancy.responsibilities || "No responsibilities saved yet."}</dd>
       </dl>
       {vacancy.source_url && <a href={vacancy.source_url} target="_blank" rel="noreferrer">Open vacancy</a>}
       {vacancy.cv_file_path && <a href={apiUrl(vacancy.cv_file_path)} target="_blank" rel="noreferrer">Open tailored CV</a>}

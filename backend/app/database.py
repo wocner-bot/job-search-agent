@@ -1,6 +1,6 @@
 from collections.abc import Generator
 
-from sqlalchemy import text
+from sqlalchemy import inspect, text
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
@@ -45,10 +45,30 @@ def ensure_sqlite_schema_compatible(database_engine=engine) -> None:
         )
 
 
+def ensure_vacancy_columns(database_engine=engine) -> None:
+    inspector = inspect(database_engine)
+    if "vacancy" not in inspector.get_table_names():
+        return
+    existing_columns = {column["name"] for column in inspector.get_columns("vacancy")}
+    required_columns = {
+        "description_raw": "VARCHAR NOT NULL DEFAULT ''",
+        "requirements": "VARCHAR NOT NULL DEFAULT ''",
+        "responsibilities": "VARCHAR NOT NULL DEFAULT ''",
+        "vacancy_keywords": "VARCHAR NOT NULL DEFAULT ''",
+    }
+    missing = [name for name in required_columns if name not in existing_columns]
+    if not missing:
+        return
+    with database_engine.begin() as connection:
+        for column_name in missing:
+            connection.execute(text(f"ALTER TABLE vacancy ADD COLUMN {column_name} {required_columns[column_name]}"))
+
+
 def init_db() -> None:
     settings.storage_dir.mkdir(parents=True, exist_ok=True)
     ensure_sqlite_schema_compatible(engine)
     SQLModel.metadata.create_all(engine)
+    ensure_vacancy_columns(engine)
 
 
 def get_session() -> Generator[Session, None, None]:

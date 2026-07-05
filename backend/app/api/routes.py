@@ -15,6 +15,7 @@ from app.services.importer import import_csv_rows, import_xlsx_sheet, normalize_
 from app.services.materials import generate_materials
 from app.services.recruiter import generate_role_recommendations
 from app.services.scoring import score_vacancy
+from app.services.vacancy_analysis import extract_vacancy_keywords, infer_vacancy_language
 from app.status import assert_status_change_allowed
 
 router = APIRouter(prefix="/api")
@@ -63,14 +64,27 @@ def list_vacancies(session: Session = Depends(get_session)) -> list[Vacancy]:
 
 @router.post("/vacancies")
 def create_vacancy(payload: VacancyCreate, session: Session = Depends(get_session)) -> Vacancy:
+    vacancy_keywords = extract_vacancy_keywords(
+        payload.title,
+        payload.description_raw,
+        payload.requirements,
+        payload.responsibilities,
+    )
     vacancy = Vacancy(
         external_id=payload.external_id,
         source=payload.source,
         company=payload.company,
         title=payload.title,
         location=payload.location,
-        language=payload.language,
+        language=payload.language or infer_vacancy_language(
+            " ".join([payload.title, payload.description_raw, payload.requirements, payload.responsibilities])
+        ),
         source_url=payload.source_url,
+        description_raw=payload.description_raw,
+        requirements=payload.requirements,
+        responsibilities=payload.responsibilities,
+        vacancy_keywords=vacancy_keywords,
+        top_match_keywords=vacancy_keywords,
     )
     session.add(vacancy)
     session.commit()
@@ -164,6 +178,8 @@ def run_analysis(session: Session = Depends(get_session)) -> dict[str, int]:
         vacancy.top_match_keywords = result.matched_keywords
         vacancy.gaps_risks = result.gaps_risks
         vacancy.adaptation_strategy = result.adaptation_strategy
+        if vacancy.id:
+            vacancy.cv_file_path = f"/api/vacancies/{vacancy.id}/tailored-cv.docx"
         session.add(vacancy)
         material = generate_materials(profile, vacancy)
         session.add(material)

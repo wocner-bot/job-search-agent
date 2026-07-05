@@ -13,6 +13,9 @@ assert.match(html, /20 должностей/);
 assert.match(html, /Подобрать вакансии/);
 assert.match(html, /Tailored CV/);
 assert.match(html, /Master CV Template/);
+assert.match(html, /Добавить реальную вакансию/);
+assert.match(html, /Исходник вакансии/);
+assert.match(html, /LinkedIn/);
 
 assert.equal(
   apiUrl("/api/vacancies/21/tailored-cv.docx", "https://job-search-agent-api-v7n6.onrender.com"),

@@ -1,4 +1,4 @@
-import type { ApplicationMaterial, ApplicationStatus, Vacancy } from "./types";
+import type { ApplicationMaterial, ApplicationStatus, Vacancy, VacancyDraft } from "./types";
 
 const rawApiBase = import.meta.env?.VITE_API_BASE ?? "";
 const API_BASE = rawApiBase && !rawApiBase.startsWith("http") ? `https://${rawApiBase}` : rawApiBase;
@@ -42,7 +42,7 @@ async function upload<T>(path: string, file: File): Promise<T> {
 export const api = {
   health: () => request<{ status: string; service: string }>("/api/health"),
   vacancies: () => request<Vacancy[]>("/api/vacancies"),
-  createVacancy: (payload: { external_id: string; company: string; title: string; source?: string; source_url?: string }) =>
+  createVacancy: (payload: VacancyDraft) =>
     request<Vacancy>("/api/vacancies", { method: "POST", body: JSON.stringify(payload) }),
   updateStatus: (id: number, status: ApplicationStatus) =>
     request<Vacancy>(`/api/vacancies/${id}/status`, {

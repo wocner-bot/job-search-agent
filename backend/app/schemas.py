@@ -53,6 +53,9 @@ class VacancyCreate(BaseModel):
     location: str = ""
     language: str = ""
     source_url: str = ""
+    description_raw: str = ""
+    requirements: str = ""
+    responsibilities: str = ""
 
 
 class StatusUpdate(BaseModel):

@@ -175,8 +175,43 @@ textarea {
   opacity: 0.72;
 }
 
+.secondary-action {
+  background: #2f5d62;
+  border-color: #2f5d62;
+}
+
+.vacancy-source-form {
+  border-top: 1px solid #d9e0e7;
+  display: grid;
+  gap: 14px;
+  padding-top: 16px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.form-grid label {
+  display: grid;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.form-grid input,
+.form-grid select {
+  border: 1px solid #c7d0da;
+  border-radius: 6px;
+  padding: 9px 10px;
+}
+
 @media (max-width: 760px) {
   .upload-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid {
     grid-template-columns: 1fr;
   }
 }

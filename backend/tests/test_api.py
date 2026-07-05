@@ -46,6 +46,56 @@ def test_create_vacancy_and_list_it():
         assert any(row["external_id"] == "MAN-1" for row in list_response.json())
 
 
+def test_create_vacancy_accepts_source_description_and_generates_tailored_cv():
+    reset_database()
+    with TestClient(app) as client:
+        candidate = client.post(
+            "/api/candidate/text",
+            json={"text": "Aleksandr Grenkov Lead Product Designer Automotive UX Voice UX Design Systems English B2"},
+        )
+        assert candidate.status_code == 200
+
+        created_response = client.post(
+            "/api/vacancies",
+            json={
+                "external_id": "REAL-1",
+                "source": "LinkedIn",
+                "company": "Rivian",
+                "title": "Sr. Lead Product Designer - Design System Frameworks",
+                "location": "Palo Alto / Remote",
+                "language": "English",
+                "source_url": "https://www.linkedin.com/jobs/example",
+                "description_raw": "Design system frameworks for automotive HMI products. Partner with engineering and product.",
+                "requirements": "Design systems; Automotive UX; HMI; Figma; component governance",
+                "responsibilities": "Define reusable frameworks and improve product consistency across vehicle experiences.",
+            },
+        )
+        assert created_response.status_code == 200
+        created = created_response.json()
+        assert created["description_raw"].startswith("Design system frameworks")
+        assert "Design Systems" in created["vacancy_keywords"]
+        assert "Automotive UX" in created["vacancy_keywords"]
+        assert "Component Governance" in created["vacancy_keywords"]
+
+        analysis_response = client.post("/api/analysis/run")
+        assert analysis_response.status_code == 200
+
+        vacancy = client.get("/api/vacancies").json()[0]
+        assert vacancy["cv_file_path"] == f"/api/vacancies/{vacancy['id']}/tailored-cv.docx"
+        assert "Design Systems" in vacancy["top_match_keywords"]
+        assert "Automotive" in vacancy["top_match_keywords"]
+
+        cv_response = client.get(vacancy["cv_file_path"])
+        assert cv_response.status_code == 200
+        document = Document(BytesIO(cv_response.content))
+        text = "\n".join(paragraph.text for paragraph in document.paragraphs)
+        assert "Rivian" in text
+        assert "Sr. Lead Product Designer - Design System Frameworks" in text
+        assert "Design Systems" in text
+        assert "Automotive UX" in text
+        assert "Vacancy Source" in text
+
+
 def test_status_update_rejects_caller_controlled_actor():
     reset_database()
     with TestClient(app) as client:
