@@ -16,6 +16,9 @@ if database_url == "sqlite:///:memory:":
     engine_kwargs["poolclass"] = StaticPool
 engine = create_engine(database_url, **engine_kwargs)
 
+LEGACY_RECRUITER_MATCH_SOURCE = "CV Recruiter Match"
+GENERATED_RECOMMENDATION_SOURCE = "LinkedIn"
+
 
 def ensure_sqlite_schema_compatible(database_engine=engine) -> None:
     if database_engine.dialect.name != "sqlite":
@@ -64,11 +67,29 @@ def ensure_vacancy_columns(database_engine=engine) -> None:
             connection.execute(text(f"ALTER TABLE vacancy ADD COLUMN {column_name} {required_columns[column_name]}"))
 
 
+def normalize_generated_recruiter_source(database_engine=engine) -> None:
+    inspector = inspect(database_engine)
+    if "vacancy" not in inspector.get_table_names():
+        return
+    existing_columns = {column["name"] for column in inspector.get_columns("vacancy")}
+    if "source" not in existing_columns:
+        return
+    with database_engine.begin() as connection:
+        connection.execute(
+            text("UPDATE vacancy SET source = :new_source WHERE source = :legacy_source"),
+            {
+                "new_source": GENERATED_RECOMMENDATION_SOURCE,
+                "legacy_source": LEGACY_RECRUITER_MATCH_SOURCE,
+            },
+        )
+
+
 def init_db() -> None:
     settings.storage_dir.mkdir(parents=True, exist_ok=True)
     ensure_sqlite_schema_compatible(engine)
     SQLModel.metadata.create_all(engine)
     ensure_vacancy_columns(engine)
+    normalize_generated_recruiter_source(engine)
 
 
 def get_session() -> Generator[Session, None, None]:

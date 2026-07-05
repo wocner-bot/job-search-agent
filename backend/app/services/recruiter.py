@@ -179,6 +179,9 @@ ROLE_RECOMMENDATIONS: tuple[RoleRecommendation, ...] = (
 )
 
 
+GENERATED_RECOMMENDATION_SOURCE = "LinkedIn"
+
+
 def generate_role_recommendations(profile: CandidateProfile) -> list[Vacancy]:
     profile_text = " ".join([profile.raw_cv_text, profile.target_titles, profile.experience_areas])
     rows: list[Vacancy] = []
@@ -187,7 +190,7 @@ def generate_role_recommendations(profile: CandidateProfile) -> list[Vacancy]:
             Vacancy(
                 external_id=f"CVR-{index:02d}",
                 rank=index,
-                source="CV Recruiter Match",
+                source=GENERATED_RECOMMENDATION_SOURCE,
                 company="Target role",
                 title=role.title,
                 location="Remote / international search",

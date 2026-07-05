@@ -3,7 +3,7 @@ from io import BytesIO
 from docx import Document
 from sqlmodel import SQLModel
 
-from app.database import engine
+from app.database import engine, normalize_generated_recruiter_source
 from app.main import app
 
 
@@ -185,7 +185,8 @@ def test_analysis_from_cv_generates_twenty_recruiter_role_matches():
 
         vacancies = client.get("/api/vacancies").json()
         assert len(vacancies) == 20
-        assert vacancies[0]["source"] == "CV Recruiter Match"
+        assert vacancies[0]["source"] == "LinkedIn"
+        assert all(row["source"] != "CV Recruiter Match" for row in vacancies)
         assert vacancies[0]["company"] == "Target role"
         assert vacancies[0]["date_status"] == "generated from CV, not a live vacancy"
         assert vacancies[0]["title"] == "Lead Product Designer"
@@ -196,6 +197,27 @@ def test_analysis_from_cv_generates_twenty_recruiter_role_matches():
         materials = client.get("/api/materials").json()
         assert len(materials) == 20
         assert "Lead Product Designer" in materials[0]["short_note"]
+
+
+def test_startup_normalizes_legacy_recruiter_match_source():
+    reset_database()
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/vacancies",
+            json={
+                "external_id": "LEGACY-1",
+                "source": "CV Recruiter Match",
+                "company": "Target role",
+                "title": "Lead Product Designer",
+                "source_url": "https://www.linkedin.com/jobs/search/?keywords=Lead+Product+Designer",
+            },
+        )
+        assert response.status_code == 200
+
+        normalize_generated_recruiter_source(engine)
+
+        vacancies = client.get("/api/vacancies").json()
+        assert vacancies[0]["source"] == "LinkedIn"
 
 
 def test_analysis_from_cv_links_every_row_to_tailored_cv_docx():
