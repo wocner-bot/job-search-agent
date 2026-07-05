@@ -14,6 +14,7 @@ export function VacancyTable({ vacancies, selectedId, onSelect }: { vacancies: V
         <tr>
           <th>Rank</th>
           <th>Source</th>
+          <th>Vacancy Link</th>
           <th>Source Text</th>
           <th>Company</th>
           <th>Vacancy</th>
@@ -27,13 +28,14 @@ export function VacancyTable({ vacancies, selectedId, onSelect }: { vacancies: V
         {vacancies.map((vacancy) => (
           <tr key={vacancy.id} className={vacancy.id === selectedId ? "selected" : ""} onClick={() => onSelect(vacancy)}>
             <td>{vacancy.rank ?? ""}</td>
+            <td>{vacancy.source || "Manual"}</td>
             <td>
               {vacancy.source_url ? (
                 <a href={vacancy.source_url} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>
-                  {vacancy.source || "Source"}
+                  Open source
                 </a>
               ) : (
-                vacancy.source
+                ""
               )}
             </td>
             <td className="source-text" title={vacancy.description_raw || vacancy.requirements || vacancy.responsibilities || vacancy.source_url}>

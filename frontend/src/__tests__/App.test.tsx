@@ -12,6 +12,7 @@ assert.doesNotMatch(html, /Файл с вакансиями/);
 assert.match(html, /20 должностей/);
 assert.match(html, /Подобрать вакансии/);
 assert.match(html, /upload-actions/);
+assert.match(html, /Vacancy Link/);
 assert.match(html, /Source Text/);
 assert.match(html, /Tailored CV/);
 assert.match(html, /Master CV Template/);
