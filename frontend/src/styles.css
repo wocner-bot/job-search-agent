@@ -368,6 +368,33 @@ button:hover,
   margin-bottom: 14px;
 }
 
+.global-preloader {
+  align-items: center;
+  background: rgba(23, 32, 42, 0.72);
+  color: #ffffff;
+  display: flex;
+  gap: 12px;
+  inset: 0;
+  justify-content: center;
+  position: fixed;
+  z-index: 20;
+}
+
+.preloader-spinner {
+  animation: spin 0.85s linear infinite;
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 999px;
+  height: 28px;
+  width: 28px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 dl {
   margin: 16px 0;
 }

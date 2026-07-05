@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { renderToStaticMarkup } from "react-dom/server";
 import App from "../App.tsx";
 import { apiUrl } from "../api.ts";
+import { CvIntake } from "../components/CvIntake.tsx";
+import { GlobalPreloader } from "../components/GlobalPreloader.tsx";
 
 const html = renderToStaticMarkup(<App />);
 
@@ -19,6 +21,41 @@ assert.match(html, /Master CV Template/);
 assert.match(html, /Добавить реальную вакансию/);
 assert.match(html, /Исходник вакансии/);
 assert.match(html, /LinkedIn/);
+
+const emptyIntake = renderToStaticMarkup(
+  <CvIntake
+    cvText=""
+    cvFileName=""
+    isMatching={false}
+    onCvTextChange={() => undefined}
+    onCvFileChange={() => undefined}
+    onMatch={() => undefined}
+    vacancyDraft={{
+      external_id: "",
+      source: "",
+      company: "",
+      title: "",
+      location: "",
+      language: "",
+      source_url: "",
+      description_raw: "",
+      requirements: "",
+      responsibilities: ""
+    }}
+    isAddingVacancy={false}
+    onVacancyDraftChange={() => undefined}
+    onAddVacancy={() => undefined}
+  />
+);
+
+assert.match(emptyIntake, /Выберите источник/);
+assert.match(emptyIntake, /Выберите язык/);
+assert.doesNotMatch(emptyIntake, /<option selected="">LinkedIn<\/option>/);
+assert.doesNotMatch(emptyIntake, /<option selected="">English<\/option>/);
+
+const preloader = renderToStaticMarkup(<GlobalPreloader label="Обрабатываю данные..." />);
+assert.match(preloader, /global-preloader/);
+assert.match(preloader, /Обрабатываю данные/);
 
 assert.equal(
   apiUrl("/api/vacancies/21/tailored-cv.docx", "https://job-search-agent-api-v7n6.onrender.com"),

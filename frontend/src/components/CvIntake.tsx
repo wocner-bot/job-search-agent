@@ -89,6 +89,7 @@ export function CvIntake({
           <label>
             Источник
             <select value={vacancyDraft.source} onChange={(event) => updateVacancyDraft("source", event.target.value)}>
+              <option value="">Выберите источник</option>
               {sourcePresets.map((source) => (
                 <option key={source}>{source}</option>
               ))}
@@ -109,6 +110,7 @@ export function CvIntake({
           <label>
             Язык
             <select value={vacancyDraft.language} onChange={(event) => updateVacancyDraft("language", event.target.value)}>
+              <option value="">Выберите язык</option>
               <option>English</option>
               <option>Russian</option>
               <option>English/Russian</option>

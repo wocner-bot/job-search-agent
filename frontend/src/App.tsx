@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { api } from "./api.ts";
 import { CvIntake } from "./components/CvIntake.tsx";
 import { ExportBar } from "./components/ExportBar.tsx";
+import { GlobalPreloader } from "./components/GlobalPreloader.tsx";
 import { Layout } from "./components/Layout.tsx";
 import { MetricsStrip } from "./components/MetricsStrip.tsx";
 import { type Filters, VacancyFilters } from "./components/VacancyFilters.tsx";
@@ -11,11 +12,11 @@ import type { ApplicationMaterial, ApplicationStatus, Vacancy, VacancyDraft } fr
 
 const emptyVacancyDraft: VacancyDraft = {
   external_id: "",
-  source: "LinkedIn",
+  source: "",
   company: "",
   title: "",
   location: "",
-  language: "English",
+  language: "",
   source_url: "",
   description_raw: "",
   requirements: "",
@@ -40,10 +41,6 @@ export default function App() {
     setMaterials(materialRows);
     setSelected((current) => vacancyRows.find((row) => row.id === current?.id) ?? vacancyRows[0]);
   }
-
-  useEffect(() => {
-    refresh().catch(() => setMessage("Backend is not connected yet."));
-  }, []);
 
   const visibleVacancies = useMemo(
     () =>
@@ -115,9 +112,11 @@ export default function App() {
   }
 
   const selectedMaterial = materials.find((material) => material.vacancy_id === selected?.id);
+  const isProcessing = isMatching || isAddingVacancy;
 
   return (
     <Layout>
+      {isProcessing && <GlobalPreloader label="Обрабатываю данные..." />}
       <header className="workspace-header">
         <div>
           <h1>Job Search Agent</h1>
