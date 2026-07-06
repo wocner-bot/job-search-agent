@@ -12,8 +12,8 @@ const html = renderToStaticMarkup(<App />);
 const styles = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
 
 assert.match(html, /Job Search Agent/);
-assert.match(styles, /photo-1598376538586-c244746bfa1e/);
-assert.match(styles, /w=3200&h=1800&q=85/);
+assert.match(styles, /--earth-night-bg:/);
+assert.match(styles, /svs\.gsfc\.nasa\.gov\/vis\/a030000\/a030800\/a030878\/BlackMarble_2016_rotate\.png/);
 assert.match(styles, /--space-section: 20px;/);
 assert.match(styles, /--space-panel: 20px;/);
 assert.match(styles, /\.workspace\s*\{[^}]*display: grid;[^}]*gap: var\(--space-section\);/s);

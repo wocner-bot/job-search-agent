@@ -21,15 +21,16 @@
   --space-panel: 20px;
   --space-field: 12px;
   --control-height: 44px;
-  --beach-bg: url("https://images.unsplash.com/photo-1598376538586-c244746bfa1e?auto=format&fit=crop&w=3200&h=1800&q=85");
+  --earth-night-bg: url("https://svs.gsfc.nasa.gov/vis/a030000/a030800/a030878/BlackMarble_2016_rotate.png");
 }
 
 body {
   margin: 0;
   background:
-    linear-gradient(115deg, rgba(8, 18, 18, 0.72), rgba(13, 20, 22, 0.86) 42%, rgba(37, 53, 49, 0.7)),
-    linear-gradient(180deg, rgba(8, 15, 16, 0.18), rgba(8, 15, 16, 0.62)),
-    var(--beach-bg),
+    radial-gradient(circle at 78% 16%, rgba(67, 128, 166, 0.2), transparent 42%),
+    linear-gradient(115deg, rgba(2, 8, 18, 0.54), rgba(4, 10, 20, 0.76) 42%, rgba(9, 20, 32, 0.62)),
+    linear-gradient(180deg, rgba(2, 6, 13, 0.2), rgba(2, 6, 13, 0.68)),
+    var(--earth-night-bg),
     var(--bg);
   background-attachment: fixed;
   background-position: center;
