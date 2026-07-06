@@ -60,7 +60,7 @@ export default function App() {
       return;
     }
     setIsMatching(true);
-    setMessage("Анализирую CV и ищу вакансии в HH.ru и Telegram...");
+    setMessage("Анализирую CV и ищу конкретные вакансии в LinkedIn, HH.ru и Telegram...");
     try {
       if (cvFile) {
         await api.uploadCandidateCv(cvFile);
@@ -70,9 +70,9 @@ export default function App() {
       const analyzed = await api.collectMatchesFromSources();
       await refresh();
       setMessage(
-        analyzed.fallback
-          ? `Живые источники временно ничего не вернули. Подобрано ${analyzed.generated} должностей для ручной проверки.`
-          : `Готово: найдено ${analyzed.generated} вакансий из источников, проанализировано ${analyzed.analyzed}.`
+        analyzed.generated > 0
+          ? `Готово: найдено ${analyzed.generated} вакансий из источников, проанализировано ${analyzed.analyzed}.`
+          : "Живые источники сейчас не вернули конкретных вакансий. Поисковые ссылки в таблицу не добавлены."
       );
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Не удалось подобрать вакансии.");

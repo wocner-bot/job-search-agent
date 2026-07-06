@@ -78,7 +78,8 @@ def collect_live_vacancies(
     candidates: list[Vacancy] = []
     seen: set[str] = set()
     for role in roles[:8]:
-        _append_unique(candidates, seen, _linkedin_search_vacancy(role))
+        for vacancy in _collect_linkedin_vacancies(role, fetch_text, per_role_limit):
+            _append_unique(candidates, seen, vacancy)
         for vacancy in _collect_hh_vacancies(role, fetch_json, date_from, per_role_limit):
             _append_unique(candidates, seen, vacancy)
     for vacancy in _collect_telegram_vacancies(profile, roles, fetch_text, date_from, telegram_channels):
@@ -102,7 +103,7 @@ def _collect_hh_vacancies(
     try:
         payload = fetch_json(HH_API_URL, params)
     except Exception:
-        return [_hh_search_fallback(role)]
+        return []
 
     rows: list[Vacancy] = []
     for item in payload.get("items", [])[:per_role_limit]:
@@ -143,55 +144,51 @@ def _collect_hh_vacancies(
     return rows
 
 
-def _linkedin_search_vacancy(role: RoleRecommendation) -> Vacancy:
+def _collect_linkedin_vacancies(role: RoleRecommendation, fetch_text: TextFetcher, per_role_limit: int) -> list[Vacancy]:
     query = " ".join([role.title, *role.keywords[:3]])
-    params = urlencode({"keywords": query, "f_TPR": "r604800"})
-    return Vacancy(
-        external_id=f"LI-SEARCH-{_slug(role.title)}",
-        source=LINKEDIN_SOURCE,
-        company="LinkedIn Jobs search",
-        title=role.title,
-        location="",
-        posted="",
-        date_status="source search link for last 7 days; verify live vacancy before sending",
-        language=role.language,
-        fit_score=role.fit_score,
-        priority=role.priority,
-        submit_status=ApplicationStatus.DRAFT,
-        next_action="Open LinkedIn Jobs search results, choose a live vacancy from the last 7 days, then add the exact vacancy text.",
-        source_url=f"https://www.linkedin.com/jobs/search/?{params}",
-        description_raw=f"LinkedIn Jobs search link for {role.title}. Direct LinkedIn vacancy scraping requires authentication and may be blocked.",
-        vacancy_keywords="; ".join(role.keywords),
-        tailored_headline=role.headline,
-        top_match_keywords="; ".join(role.keywords),
-        gaps_risks="LinkedIn search link requires manual verification of the exact vacancy, publication date, and application route.",
-        adaptation_strategy=role.strategy,
-    )
+    params = urlencode({"keywords": query, "f_TPR": "r604800", "start": "0"})
+    try:
+        page = fetch_text(f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?{params}")
+    except Exception:
+        return []
+    return _parse_linkedin_cards(page, role)[:per_role_limit]
 
 
-def _hh_search_fallback(role: RoleRecommendation) -> Vacancy:
-    params = urlencode({"text": role.title, "search_period": "7", "order_by": "publication_time"})
-    return Vacancy(
-        external_id=f"HH-SEARCH-{_slug(role.title)}",
-        source=HH_SOURCE,
-        company="HH.ru search",
-        title=role.title,
-        location="",
-        posted="",
-        date_status="source search link for last 7 days; verify live vacancy before sending",
-        language=role.language,
-        fit_score=role.fit_score,
-        priority=role.priority,
-        submit_status=ApplicationStatus.DRAFT,
-        next_action="Open HH.ru search results, choose a live vacancy from the last 7 days, then add the exact vacancy text.",
-        source_url=f"https://hh.ru/search/vacancy?{params}",
-        description_raw=f"HH.ru search link for {role.title}. API did not return vacancy details from this environment.",
-        vacancy_keywords="; ".join(role.keywords),
-        tailored_headline=role.headline,
-        top_match_keywords="; ".join(role.keywords),
-        gaps_risks="HH.ru API was unavailable or blocked; verify exact vacancy, publication date, and requirements before sending.",
-        adaptation_strategy=role.strategy,
-    )
+def _parse_linkedin_cards(page: str, role: RoleRecommendation) -> list[Vacancy]:
+    cards: list[Vacancy] = []
+    for raw_card in re.findall(r"<li[\s\S]*?</li>", page, flags=re.IGNORECASE):
+        source_url = _clean_linkedin_url(_extract_attr(raw_card, "href"))
+        if not source_url or "/jobs/view/" not in source_url:
+            continue
+        title = _clean_text(_extract_tag(raw_card, "h3")) or role.title
+        company = _clean_text(_extract_tag(raw_card, "h4")) or "LinkedIn employer"
+        location = _clean_text(_extract_first_match(raw_card, r'<span[^>]*class="[^"]*location[^"]*"[^>]*>([\s\S]*?)</span>'))
+        posted = _extract_attr(raw_card, "datetime")
+        description = " ".join(part for part in [title, company, location] if part)
+        cards.append(
+            Vacancy(
+                external_id=f"LI-{_linkedin_id(source_url) or _slug(title)}",
+                source=LINKEDIN_SOURCE,
+                company=company,
+                title=title,
+                location=location,
+                posted=posted,
+                date_status="verified within 7 days",
+                language=infer_vacancy_language(description),
+                fit_score=role.fit_score,
+                priority=role.priority,
+                submit_status=ApplicationStatus.DRAFT,
+                next_action="Open LinkedIn vacancy, verify status, then send tailored CV manually.",
+                source_url=source_url,
+                description_raw=description,
+                vacancy_keywords=extract_vacancy_keywords(title, description),
+                tailored_headline=role.headline,
+                top_match_keywords="; ".join(role.keywords),
+                gaps_risks="Verify LinkedIn vacancy status, location, and application route before sending.",
+                adaptation_strategy=role.strategy,
+            )
+        )
+    return cards
 
 
 def _collect_telegram_vacancies(
@@ -369,7 +366,7 @@ def _relevance_score(profile: CandidateProfile, roles: tuple[RoleRecommendation,
         score += 8
     if vacancy.source == HH_SOURCE and "search link" not in vacancy.date_status:
         score += 10
-    if vacancy.source == LINKEDIN_SOURCE or "search link" in vacancy.date_status:
+    if "search link" in vacancy.date_status:
         score -= 12
     if vacancy.description_raw and "search link" not in vacancy.description_raw.lower():
         score += 12
@@ -410,6 +407,34 @@ def _clean_text(value: str) -> str:
     value = re.sub(r"<[^>]+>", " ", value)
     value = re.sub(r"\s+", " ", value)
     return value.strip()
+
+
+def _extract_tag(fragment: str, tag: str) -> str:
+    return _extract_first_match(fragment, rf"<{tag}[^>]*>([\s\S]*?)</{tag}>")
+
+
+def _extract_attr(fragment: str, attr: str) -> str:
+    return html.unescape(_extract_first_match(fragment, rf'{attr}="([^"]+)"'))
+
+
+def _extract_first_match(fragment: str, pattern: str) -> str:
+    match = re.search(pattern, fragment, flags=re.IGNORECASE)
+    return match.group(1) if match else ""
+
+
+def _clean_linkedin_url(value: str) -> str:
+    if not value:
+        return ""
+    value = html.unescape(value)
+    if value.startswith("/"):
+        value = f"https://www.linkedin.com{value}"
+    match = re.search(r"(https://www\.linkedin\.com/jobs/view/\d+)", value)
+    return match.group(1) if match else value.split("?", 1)[0]
+
+
+def _linkedin_id(value: str) -> str:
+    match = re.search(r"/jobs/view/(\d+)", value)
+    return match.group(1) if match else ""
 
 
 def _slug(value: str) -> str:

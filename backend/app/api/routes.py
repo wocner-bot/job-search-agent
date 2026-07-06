@@ -207,12 +207,8 @@ def generate_analysis_from_sources(session: Session = Depends(get_session)) -> d
         raise HTTPException(status_code=400, detail="Create a candidate profile first")
 
     vacancies = collect_live_vacancies(profile, ROLE_RECOMMENDATIONS)
-    fallback = False
-    if not vacancies:
-        vacancies = generate_role_recommendations(profile)
-        fallback = True
     _replace_vacancies_with_materials(session, profile, vacancies)
-    return {"generated": len(vacancies), "analyzed": len(vacancies), "fallback": fallback}
+    return {"generated": len(vacancies), "analyzed": len(vacancies), "fallback": False}
 
 
 def _replace_vacancies_with_materials(session: Session, profile: CandidateProfile, vacancies: list[Vacancy]) -> None:

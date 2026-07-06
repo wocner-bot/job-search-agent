@@ -144,6 +144,43 @@ def test_tailored_cv_uses_russian_for_russian_vacancy():
         assert "Experience" not in text
 
 
+def test_tailored_cv_uses_vacancy_text_language_over_metadata():
+    reset_database()
+    with TestClient(app) as client:
+        client.post(
+            "/api/candidate/text",
+            json={"text": "Aleksandr Grenkov Lead Product Designer Automotive UX HMI Voice UX Design Systems English B2"},
+        )
+        created_response = client.post(
+            "/api/vacancies",
+            json={
+                "external_id": "EN-META-RU",
+                "source": "LinkedIn",
+                "company": "VehicleCo",
+                "title": "Senior Product Designer",
+                "language": "Russian",
+                "description_raw": "We are looking for a Senior Product Designer to build design systems, dashboards, and complex UX flows.",
+                "requirements": "Figma; design systems; UX research; English",
+                "responsibilities": "Lead product design discovery and partner with product and engineering.",
+            },
+        )
+        assert created_response.status_code == 200
+        assert client.post("/api/analysis/run").status_code == 200
+
+        vacancy = client.get("/api/vacancies").json()[0]
+        cv_response = client.get(vacancy["cv_file_path"])
+        assert cv_response.status_code == 200
+
+        document = Document(BytesIO(cv_response.content))
+        text = "\n".join(paragraph.text for paragraph in document.paragraphs)
+        assert "Profile" in text
+        assert "Skills" in text
+        assert "Experience" in text
+        assert "Профиль" not in text
+        assert "Навыки" not in text
+        assert "Опыт" not in text
+
+
 def test_status_update_rejects_caller_controlled_actor():
     reset_database()
     with TestClient(app) as client:
@@ -289,6 +326,28 @@ def test_analysis_from_sources_collects_real_source_vacancies(monkeypatch):
         vacancies = client.get("/api/vacancies").json()
         assert [row["source"] for row in vacancies] == ["HH.ru", "Telegram @wantapply_design"]
         assert all(row["cv_file_path"] == f"/api/vacancies/{row['id']}/tailored-cv.docx" for row in vacancies)
+
+
+def test_analysis_from_sources_does_not_create_search_link_fallback(monkeypatch):
+    reset_database()
+    monkeypatch.setattr("app.api.routes.collect_live_vacancies", lambda _profile, _roles: [])
+    with TestClient(app) as client:
+        client.post("/api/candidate/text", json={"text": "Aleksandr Grenkov Lead Product Designer"})
+        client.post(
+            "/api/vacancies",
+            json={
+                "external_id": "OLD-SEARCH",
+                "source": "LinkedIn",
+                "company": "Target role",
+                "title": "Lead Product Designer",
+                "source_url": "https://www.linkedin.com/jobs/search/?keywords=Lead+Product+Designer",
+            },
+        )
+
+        response = client.post("/api/analysis/from-sources")
+        assert response.status_code == 200
+        assert response.json() == {"generated": 0, "analyzed": 0, "fallback": False}
+        assert client.get("/api/vacancies").json() == []
 
 
 def test_startup_normalizes_legacy_recruiter_match_source():

@@ -333,9 +333,11 @@ def _is_russian_vacancy(vacancy: Vacancy) -> bool:
     text = " ".join([vacancy.title, vacancy.description_raw, vacancy.requirements, vacancy.responsibilities])
     cyrillic = sum(1 for char in text if "а" <= char.lower() <= "я" or char.lower() == "ё")
     latin = sum(1 for char in text if "a" <= char.lower() <= "z")
+    if cyrillic or latin:
+        return cyrillic >= 12 and cyrillic > latin * 0.25
     if "russian" in language and "english" not in language:
         return True
-    return cyrillic > latin * 0.35
+    return False
 
 
 def _priority_label_ru(priority: str) -> str:

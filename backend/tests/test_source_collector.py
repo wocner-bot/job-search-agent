@@ -33,6 +33,16 @@ def test_collect_live_vacancies_reads_hh_and_telegram_sources():
         }
 
     def fake_text(url: str) -> str:
+        if "linkedin.com/jobs-guest" in url:
+            return """
+            <li>
+              <a class="base-card__full-link" href="https://www.linkedin.com/jobs/view/456?trackingId=abc"></a>
+              <h3 class="base-search-card__title">Lead Product Designer HMI</h3>
+              <h4 class="base-search-card__subtitle">VehicleCo</h4>
+              <span class="job-search-card__location">Remote</span>
+              <time datetime="2026-07-04"></time>
+            </li>
+            """
         assert "t.me/s/wantapply_design" in url
         return """
         <div class="tgme_widget_message" data-post="wantapply_design/77">
@@ -55,14 +65,15 @@ def test_collect_live_vacancies_reads_hh_and_telegram_sources():
     )
 
     assert {vacancy.source for vacancy in vacancies} == {"LinkedIn", "HH.ru", "Telegram @wantapply_design"}
-    assert any(vacancy.source_url.startswith("https://www.linkedin.com/jobs/search/") for vacancy in vacancies)
+    assert any(vacancy.source_url == "https://www.linkedin.com/jobs/view/456" for vacancy in vacancies)
     assert any(vacancy.source_url == "https://hh.ru/vacancy/123" for vacancy in vacancies)
     assert any(vacancy.source_url == "https://t.me/wantapply_design/77" for vacancy in vacancies)
     assert all("7 days" in vacancy.date_status for vacancy in vacancies)
+    assert all("search/" not in vacancy.source_url for vacancy in vacancies)
     assert all(vacancy.cv_file_path == "" for vacancy in vacancies)
 
 
-def test_collect_live_vacancies_adds_hh_search_link_when_api_is_blocked():
+def test_collect_live_vacancies_does_not_add_search_link_placeholders_when_sources_are_blocked():
     profile = CandidateProfile(raw_cv_text="Lead Product Designer", target_titles="Lead Product Designer")
 
     def blocked_json(_url: str, _params: dict[str, str]) -> dict:
@@ -79,11 +90,7 @@ def test_collect_live_vacancies_adds_hh_search_link_when_api_is_blocked():
         max_results=10,
     )
 
-    assert [vacancy.source for vacancy in vacancies] == ["LinkedIn", "HH.ru"]
-    hh_vacancy = vacancies[1]
-    assert hh_vacancy.company == "HH.ru search"
-    assert hh_vacancy.source_url.startswith("https://hh.ru/search/vacancy?")
-    assert hh_vacancy.date_status == "source search link for last 7 days; verify live vacancy before sending"
+    assert vacancies == []
 
 
 def test_collect_live_vacancies_does_not_limit_relevant_posts_per_channel():
@@ -105,7 +112,7 @@ def test_collect_live_vacancies_does_not_limit_relevant_posts_per_channel():
         profile,
         roles=ROLE_RECOMMENDATIONS[:1],
         fetch_json=lambda _url, _params: {"items": []},
-        fetch_text=fake_text,
+        fetch_text=lambda url: "" if "linkedin.com/jobs-guest" in url else fake_text(url),
         today=date(2026, 7, 6),
         telegram_channels=("wantapply_design", "zapwork"),
         per_role_limit=0,
@@ -139,7 +146,7 @@ def test_collect_live_vacancies_ranks_by_cv_match_not_source_order():
         profile,
         roles=ROLE_RECOMMENDATIONS[:1],
         fetch_json=lambda _url, _params: {"items": []},
-        fetch_text=fake_text,
+        fetch_text=lambda url: "" if "linkedin.com/jobs-guest" in url else fake_text(url),
         today=date(2026, 7, 6),
         telegram_channels=("jobs",),
         per_role_limit=0,
@@ -169,7 +176,7 @@ def test_collect_live_vacancies_skips_irrelevant_telegram_posts():
         profile,
         roles=ROLE_RECOMMENDATIONS[:1],
         fetch_json=lambda _url, _params: {"items": []},
-        fetch_text=fake_text,
+        fetch_text=lambda url: "" if "linkedin.com/jobs-guest" in url else fake_text(url),
         today=date(2026, 7, 6),
         telegram_channels=("jobs",),
         per_role_limit=0,
@@ -198,11 +205,10 @@ def test_collect_live_vacancies_has_no_default_global_limit():
         profile,
         roles=ROLE_RECOMMENDATIONS[:1],
         fetch_json=lambda _url, _params: {"items": []},
-        fetch_text=fake_text,
+        fetch_text=lambda url: "" if "linkedin.com/jobs-guest" in url else fake_text(url),
         today=date(2026, 7, 6),
         telegram_channels=("jobs",),
         per_role_limit=0,
     )
 
     assert len(vacancies) > 30
-    assert any(vacancy.source == "LinkedIn" for vacancy in vacancies)
