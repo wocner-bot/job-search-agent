@@ -371,11 +371,12 @@ button:hover,
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
-  min-width: 1180px;
+  min-width: 1260px;
 }
 
 .queue-table .source-text {
   color: var(--muted);
+  min-width: 180px;
   max-width: 280px;
   overflow-wrap: anywhere;
 }

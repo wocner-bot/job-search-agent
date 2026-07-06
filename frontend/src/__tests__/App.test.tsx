@@ -19,6 +19,7 @@ assert.match(styles, /--space-panel: 20px;/);
 assert.match(styles, /\.workspace\s*\{[^}]*display: grid;[^}]*gap: var\(--space-section\);/s);
 assert.match(styles, /\.panel\s*\{[^}]*padding: var\(--space-panel\);[^}]*margin-bottom: 0;/s);
 assert.match(styles, /\.metrics\s*\{[^}]*gap: var\(--space-section\);[^}]*margin-bottom: 0;/s);
+assert.match(styles, /\.queue-table \.source-text\s*\{[^}]*min-width: 180px;/s);
 assert.match(styles, /\.workspace\s*\{[^}]*background: transparent;/s);
 assert.match(styles, /\.workspace\s*\{[^}]*border: 0;/s);
 assert.doesNotMatch(html, /href="#cv"/);
