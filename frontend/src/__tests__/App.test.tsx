@@ -13,6 +13,9 @@ const styles = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
 
 assert.match(html, /Job Search Agent/);
 assert.match(styles, /photo-1598376538586-c244746bfa1e/);
+assert.match(styles, /w=3200&h=1800&q=85/);
+assert.match(styles, /\.workspace\s*\{[^}]*background: transparent;/s);
+assert.match(styles, /\.workspace\s*\{[^}]*border: 0;/s);
 assert.doesNotMatch(html, /href="#cv"/);
 assert.doesNotMatch(html, /href="#package"/);
 assert.doesNotMatch(html, /href="#exports"/);

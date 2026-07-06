@@ -16,7 +16,7 @@
   --accent-blue: #31aee6;
   --success: #46bd75;
   --shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
-  --beach-bg: url("https://images.unsplash.com/photo-1598376538586-c244746bfa1e?auto=format&fit=crop&w=2400&q=80");
+  --beach-bg: url("https://images.unsplash.com/photo-1598376538586-c244746bfa1e?auto=format&fit=crop&w=3200&h=1800&q=85");
 }
 
 body {
@@ -48,12 +48,12 @@ textarea {
 }
 
 .workspace {
-  background: rgba(207, 218, 213, 0.14);
-  border: 1px solid var(--line-strong);
+  background: transparent;
+  border: 0;
   border-radius: 8px;
-  box-shadow: var(--shadow);
+  box-shadow: none;
   padding: 28px 32px;
-  backdrop-filter: blur(26px);
+  backdrop-filter: none;
   min-width: 0;
 }
 
