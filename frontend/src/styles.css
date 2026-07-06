@@ -1,11 +1,29 @@
 :root {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #17202a;
-  background: #f4f6f8;
+  color: #f4f7f2;
+  background: #101719;
+  color-scheme: dark;
+  --bg: #101719;
+  --surface: rgba(226, 235, 229, 0.14);
+  --surface-strong: rgba(236, 242, 238, 0.2);
+  --surface-soft: rgba(255, 255, 255, 0.08);
+  --line: rgba(255, 255, 255, 0.14);
+  --line-strong: rgba(255, 255, 255, 0.22);
+  --text: #f7f9f4;
+  --muted: #c4cec8;
+  --quiet: #92a09b;
+  --accent: #c9dc28;
+  --accent-blue: #31aee6;
+  --success: #46bd75;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
 }
 
 body {
   margin: 0;
+  background:
+    linear-gradient(115deg, rgba(53, 78, 80, 0.82), rgba(19, 26, 28, 0.94) 42%, rgba(77, 83, 78, 0.76)),
+    var(--bg);
+  min-height: 100vh;
 }
 
 button,
@@ -18,41 +36,73 @@ textarea {
 .app-shell {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-columns: 96px minmax(0, 1fr);
+  padding: 32px;
+  box-sizing: border-box;
+  gap: 22px;
 }
 
 .sidebar {
-  background: #17202a;
-  color: white;
-  padding: 24px 18px;
+  align-self: start;
+  background: rgba(14, 18, 19, 0.54);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  color: var(--text);
+  padding: 18px 12px;
+  position: sticky;
+  top: 32px;
+  backdrop-filter: blur(22px);
 }
 
 .brand {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   font-weight: 700;
-  margin-bottom: 28px;
+  margin-bottom: 18px;
+}
+
+.brand span {
+  display: none;
 }
 
 .nav {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .nav a {
-  color: #d8dee6;
+  align-items: center;
+  aspect-ratio: 1;
+  border: 1px solid transparent;
+  color: var(--muted);
+  display: grid;
+  font-size: 11px;
+  justify-items: center;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+  text-align: center;
   text-decoration: none;
   padding: 10px 12px;
   border-radius: 6px;
 }
 
 .nav a:hover {
-  background: #24313f;
+  background: var(--surface-strong);
+  border-color: var(--line);
+  color: var(--text);
 }
 
 .workspace {
-  padding: 24px;
+  background: rgba(207, 218, 213, 0.14);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 28px 32px;
+  backdrop-filter: blur(26px);
+  min-width: 0;
 }
 
 .workspace-header {
@@ -64,43 +114,67 @@ textarea {
 
 .workspace-header h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: 38px;
+  line-height: 1;
 }
 
 .workspace-header p {
-  margin: 6px 0 0;
-  color: #5d6b7a;
+  margin: 10px 0 0;
+  color: var(--muted);
 }
 
 .panel {
-  background: white;
-  border: 1px solid #d9e0e7;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  overflow-x: auto;
+  padding: 20px;
   margin-bottom: 16px;
+  backdrop-filter: blur(18px);
 }
 
 .panel h2 {
   margin: 0 0 12px;
-  font-size: 18px;
+  font-size: 22px;
 }
 
 textarea {
   width: 100%;
   min-height: 150px;
-  border: 1px solid #c7d0da;
+  background: rgba(11, 16, 17, 0.34);
+  border: 1px solid var(--line);
   border-radius: 6px;
+  color: var(--text);
   padding: 12px;
   box-sizing: border-box;
+  outline: none;
+}
+
+::placeholder {
+  color: rgba(244, 247, 242, 0.5);
+}
+
+textarea:focus,
+input:focus,
+select:focus {
+  border-color: rgba(201, 220, 40, 0.7);
+  box-shadow: 0 0 0 3px rgba(201, 220, 40, 0.14);
+  outline: none;
 }
 
 @media (max-width: 760px) {
   .app-shell {
     grid-template-columns: 1fr;
+    padding: 14px;
   }
 
   .sidebar {
     position: static;
+  }
+
+  .nav {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -111,12 +185,12 @@ textarea {
 
 .match-copy h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: 30px;
 }
 
 .match-copy p {
   margin: 6px 0 0;
-  color: #5d6b7a;
+  color: var(--muted);
 }
 
 .field-block,
@@ -152,10 +226,10 @@ textarea {
 }
 
 .upload-box {
-  border: 1px solid #c7d0da;
+  border: 1px solid var(--line);
   border-radius: 8px;
   padding: 14px;
-  background: #f8fafc;
+  background: rgba(245, 250, 246, 0.1);
 }
 
 .upload-box input {
@@ -163,18 +237,19 @@ textarea {
 }
 
 .upload-box strong {
-  color: #5d6b7a;
+  color: var(--muted);
   font-size: 13px;
   overflow-wrap: anywhere;
 }
 
 .primary-action {
   justify-content: center;
-  background: #17202a;
-  color: #ffffff;
-  border-color: #17202a;
+  background: var(--accent);
+  color: #172014;
+  border-color: rgba(236, 255, 77, 0.34);
   min-height: 44px;
   font-weight: 700;
+  box-shadow: 0 14px 30px rgba(201, 220, 40, 0.18);
 }
 
 .primary-action:disabled {
@@ -182,17 +257,23 @@ textarea {
   opacity: 0.72;
 }
 
+.primary-action:hover {
+  background: #d8ec32;
+  border-color: rgba(236, 255, 77, 0.58);
+  color: #172014;
+}
+
 .match-button {
   align-self: stretch;
 }
 
 .secondary-action {
-  background: #2f5d62;
-  border-color: #2f5d62;
+  background: var(--success);
+  border-color: rgba(70, 189, 117, 0.42);
 }
 
 .vacancy-source-form {
-  border-top: 1px solid #d9e0e7;
+  border-top: 1px solid var(--line);
   display: grid;
   gap: 14px;
   padding-top: 16px;
@@ -212,8 +293,10 @@ textarea {
 
 .form-grid input,
 .form-grid select {
-  border: 1px solid #c7d0da;
+  background: rgba(11, 16, 17, 0.34);
+  border: 1px solid var(--line);
   border-radius: 6px;
+  color: var(--text);
   padding: 9px 10px;
 }
 
@@ -236,9 +319,9 @@ button,
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid #bac5d1;
-  background: #ffffff;
-  color: #17202a;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
   border-radius: 6px;
   padding: 9px 12px;
   text-decoration: none;
@@ -247,7 +330,8 @@ button,
 
 button:hover,
 .button-link:hover {
-  border-color: #718096;
+  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .toolbar {
@@ -264,21 +348,22 @@ button:hover,
 }
 
 .metrics div {
-  background: #ffffff;
-  border: 1px solid #d9e0e7;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 8px;
   padding: 14px;
 }
 
 .metrics span {
   display: block;
-  color: #657386;
+  color: var(--muted);
   font-size: 13px;
 }
 
 .metrics strong {
   display: block;
-  font-size: 28px;
+  color: var(--text);
+  font-size: 30px;
   margin-top: 4px;
 }
 
@@ -299,8 +384,10 @@ button:hover,
 .filters input,
 .filters select,
 .detail-panel select {
-  border: 1px solid #c7d0da;
+  background: rgba(11, 16, 17, 0.34);
+  border: 1px solid var(--line);
   border-radius: 6px;
+  color: var(--text);
   padding: 8px;
 }
 
@@ -314,10 +401,11 @@ button:hover,
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+  min-width: 1180px;
 }
 
 .queue-table .source-text {
-  color: #4f5f70;
+  color: var(--muted);
   max-width: 280px;
   overflow-wrap: anywhere;
 }
@@ -325,8 +413,14 @@ button:hover,
 .queue-table th,
 .queue-table td {
   text-align: left;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding: 10px;
+}
+
+.queue-table th {
+  color: var(--quiet);
+  font-size: 12px;
+  text-transform: uppercase;
 }
 
 .queue-table tr {
@@ -335,15 +429,17 @@ button:hover,
 
 .queue-table tr.selected,
 .queue-table tbody tr:hover {
-  background: #eef4f8;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .detail-panel {
-  background: #ffffff;
-  border: 1px solid #d9e0e7;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   padding: 18px;
   min-height: 360px;
+  backdrop-filter: blur(18px);
 }
 
 .detail-panel h2 {
@@ -353,17 +449,17 @@ button:hover,
 .detail-panel a {
   display: block;
   margin: 8px 0;
-  color: #0f609b;
+  color: var(--accent);
 }
 
 .muted,
 .notice {
-  color: #657386;
+  color: var(--muted);
 }
 
 .notice {
-  background: #edf7ed;
-  border: 1px solid #bfdfc0;
+  background: rgba(70, 189, 117, 0.16);
+  border: 1px solid rgba(70, 189, 117, 0.32);
   border-radius: 8px;
   padding: 10px 12px;
   margin-bottom: 14px;
@@ -407,7 +503,7 @@ dt {
 
 dd {
   margin: 4px 0 0;
-  color: #344456;
+  color: var(--muted);
 }
 
 .messages textarea {
