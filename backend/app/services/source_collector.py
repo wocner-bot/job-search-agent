@@ -425,10 +425,38 @@ def _rank_vacancies(
     max_results: int,
 ) -> list[Vacancy]:
     ranked = sorted(vacancies, key=lambda vacancy: _relevance_score(profile, roles, vacancy), reverse=True)
+    ranked = _keep_source_groups_visible(ranked)
     selected = ranked[:max_results] if max_results > 0 else ranked
     for index, vacancy in enumerate(selected, start=1):
         vacancy.rank = index
     return selected
+
+
+def _keep_source_groups_visible(ranked: list[Vacancy]) -> list[Vacancy]:
+    visible: list[Vacancy] = []
+    visible_ids: set[int] = set()
+    seen_groups: set[str] = set()
+
+    for vacancy in ranked:
+        group = _source_group(vacancy)
+        if group in seen_groups:
+            continue
+        seen_groups.add(group)
+        visible_ids.add(id(vacancy))
+        visible.append(vacancy)
+
+    for vacancy in ranked:
+        if id(vacancy) in visible_ids:
+            continue
+        visible.append(vacancy)
+
+    return visible
+
+
+def _source_group(vacancy: Vacancy) -> str:
+    if vacancy.source.startswith("Telegram"):
+        return "Telegram"
+    return vacancy.source or "Unknown"
 
 
 def _relevance_score(profile: CandidateProfile, roles: tuple[RoleRecommendation, ...], vacancy: Vacancy) -> int:

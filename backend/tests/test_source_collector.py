@@ -241,6 +241,66 @@ def test_collect_live_vacancies_ranks_by_cv_match_not_source_order():
     assert vacancies[0].rank == 1
 
 
+def test_collect_live_vacancies_keeps_hh_and_linkedin_visible_when_telegram_scores_higher():
+    profile = CandidateProfile(
+        raw_cv_text="Lead Product Designer Automotive UX HMI Design Systems Figma English B2",
+        target_titles="Lead Product Designer / Automotive UX Designer",
+        experience_areas="Automotive UX; HMI; Design Systems; Figma",
+    )
+
+    def fake_json(_url: str, _params: dict[str, str]) -> dict:
+        return {
+            "items": [
+                {
+                    "id": "123",
+                    "name": "UX Designer",
+                    "alternate_url": "https://hh.ru/vacancy/123",
+                    "published_at": "2026-07-04T10:00:00+0300",
+                    "employer": {"name": "HH Studio"},
+                    "area": {"name": "Remote"},
+                    "snippet": {"requirement": "Figma", "responsibility": "Design interfaces"},
+                }
+            ]
+        }
+
+    def fake_text(url: str) -> str:
+        if "linkedin.com/jobs-guest" in url:
+            return """
+            <li>
+              <a class="base-card__full-link" href="https://www.linkedin.com/jobs/view/456?trackingId=abc"></a>
+              <h3 class="base-search-card__title">UX Designer</h3>
+              <h4 class="base-search-card__subtitle">LinkedIn Studio</h4>
+              <span class="job-search-card__location">Remote</span>
+              <time datetime="2026-07-04"></time>
+            </li>
+            """
+        return "".join(
+            f"""
+            <div class="tgme_widget_message" data-post="jobs/{index}">
+              <time datetime="2026-07-03T09:00:00+00:00"></time>
+              <div class="tgme_widget_message_text js-message_text">
+                Lead Product Designer Automotive UX HMI design systems Figma vehicle dashboards {index}
+              </div>
+            </div>
+            """
+            for index in range(1, 6)
+        )
+
+    vacancies = collect_live_vacancies(
+        profile,
+        roles=ROLE_RECOMMENDATIONS[:1],
+        fetch_json=fake_json,
+        fetch_text=fake_text,
+        today=date(2026, 7, 6),
+        telegram_channels=("jobs",),
+        per_role_limit=1,
+        max_results=4,
+    )
+
+    assert {vacancy.source for vacancy in vacancies} == {"LinkedIn", "HH.ru", "Telegram @jobs"}
+    assert [vacancy.rank for vacancy in vacancies] == [1, 2, 3, 4]
+
+
 def test_collect_live_vacancies_skips_irrelevant_telegram_posts():
     profile = CandidateProfile(raw_cv_text="Lead Product Designer Design Systems", target_titles="Lead Product Designer")
 
