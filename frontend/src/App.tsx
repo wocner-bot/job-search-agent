@@ -8,27 +8,12 @@ import { MetricsStrip } from "./components/MetricsStrip.tsx";
 import { type Filters, VacancyFilters } from "./components/VacancyFilters.tsx";
 import { VacancyDetail } from "./components/VacancyDetail.tsx";
 import { VacancyTable } from "./components/VacancyTable.tsx";
-import type { ApplicationMaterial, ApplicationStatus, Vacancy, VacancyDraft } from "./types.ts";
-
-const emptyVacancyDraft: VacancyDraft = {
-  external_id: "",
-  source: "",
-  company: "",
-  title: "",
-  location: "",
-  language: "",
-  source_url: "",
-  description_raw: "",
-  requirements: "",
-  responsibilities: ""
-};
+import type { ApplicationMaterial, ApplicationStatus, Vacancy } from "./types.ts";
 
 export default function App() {
   const [cvText, setCvText] = useState("");
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [isMatching, setIsMatching] = useState(false);
-  const [isAddingVacancy, setIsAddingVacancy] = useState(false);
-  const [vacancyDraft, setVacancyDraft] = useState<VacancyDraft>(emptyVacancyDraft);
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [materials, setMaterials] = useState<ApplicationMaterial[]>([]);
   const [selected, setSelected] = useState<Vacancy | undefined>();
@@ -81,30 +66,6 @@ export default function App() {
     }
   }
 
-  async function addVacancy() {
-    if (!vacancyDraft.source_url.trim()) {
-      setMessage("Добавьте ссылку на вакансию.");
-      return;
-    }
-    setIsAddingVacancy(true);
-    setMessage("Читаю вакансию по ссылке и готовлю CV под неё...");
-    try {
-      await api.createVacancy({
-        ...emptyVacancyDraft,
-        source_url: vacancyDraft.source_url,
-        external_id: vacancyDraft.external_id || `MAN-${Date.now()}`
-      });
-      await api.runAnalysis();
-      await refresh();
-      setVacancyDraft(emptyVacancyDraft);
-      setMessage("Вакансия добавлена: данные заполнены из ссылки, tailored CV привязан в таблице.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Не удалось добавить вакансию.");
-    } finally {
-      setIsAddingVacancy(false);
-    }
-  }
-
   async function updateStatus(status: ApplicationStatus) {
     if (!selected) return;
     const updated = await api.updateStatus(selected.id, status);
@@ -113,7 +74,7 @@ export default function App() {
   }
 
   const selectedMaterial = materials.find((material) => material.vacancy_id === selected?.id);
-  const isProcessing = isMatching || isAddingVacancy;
+  const isProcessing = isMatching;
 
   return (
     <Layout>
@@ -132,10 +93,6 @@ export default function App() {
         onCvTextChange={setCvText}
         onCvFileChange={setCvFile}
         onMatch={matchVacancies}
-        vacancyDraft={vacancyDraft}
-        isAddingVacancy={isAddingVacancy}
-        onVacancyDraftChange={setVacancyDraft}
-        onAddVacancy={addVacancy}
       />
       <MetricsStrip vacancies={vacancies} />
       <section id="queue" className="queue-layout">

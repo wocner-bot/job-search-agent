@@ -18,9 +18,9 @@ assert.match(html, /Vacancy Link/);
 assert.match(html, /Source Text/);
 assert.match(html, /Tailored CV/);
 assert.match(html, /Master CV Template/);
-assert.match(html, /Добавить реальную вакансию/);
-assert.match(html, /Ссылка на вакансию/);
-assert.match(html, /Название, компания, регион, язык и исходный текст будут заполнены автоматически/);
+assert.doesNotMatch(html, /Добавить реальную вакансию/);
+assert.doesNotMatch(html, /Ссылка на вакансию/);
+assert.doesNotMatch(html, /Название, компания, регион, язык и исходный текст будут заполнены автоматически/);
 assert.doesNotMatch(html, /Исходник вакансии/);
 assert.doesNotMatch(html, /Выберите источник/);
 
@@ -32,25 +32,10 @@ const emptyIntake = renderToStaticMarkup(
     onCvTextChange={() => undefined}
     onCvFileChange={() => undefined}
     onMatch={() => undefined}
-    vacancyDraft={{
-      external_id: "",
-      source: "",
-      company: "",
-      title: "",
-      location: "",
-      language: "",
-      source_url: "",
-      description_raw: "",
-      requirements: "",
-      responsibilities: ""
-    }}
-    isAddingVacancy={false}
-    onVacancyDraftChange={() => undefined}
-    onAddVacancy={() => undefined}
   />
 );
 
-assert.match(emptyIntake, /Ссылка на вакансию/);
+assert.doesNotMatch(emptyIntake, /Ссылка на вакансию/);
 assert.doesNotMatch(emptyIntake, /Выберите язык/);
 assert.doesNotMatch(emptyIntake, /Requirements/);
 assert.doesNotMatch(emptyIntake, /Responsibilities/);

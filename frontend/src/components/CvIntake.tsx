@@ -1,5 +1,4 @@
 import { FileText, Sparkles, Upload } from "lucide-react";
-import type { VacancyDraft } from "../types";
 
 type CvIntakeProps = {
   cvText: string;
@@ -8,10 +7,6 @@ type CvIntakeProps = {
   onCvTextChange: (value: string) => void;
   onCvFileChange: (file: File | null) => void;
   onMatch: () => void;
-  vacancyDraft: VacancyDraft;
-  isAddingVacancy: boolean;
-  onVacancyDraftChange: (draft: VacancyDraft) => void;
-  onAddVacancy: () => void;
 };
 
 export function CvIntake({
@@ -20,16 +15,8 @@ export function CvIntake({
   isMatching,
   onCvTextChange,
   onCvFileChange,
-  onMatch,
-  vacancyDraft,
-  isAddingVacancy,
-  onVacancyDraftChange,
-  onAddVacancy
+  onMatch
 }: CvIntakeProps) {
-  const updateVacancyDraft = (field: keyof VacancyDraft, value: string) => {
-    onVacancyDraftChange({ ...vacancyDraft, [field]: value });
-  };
-
   return (
     <section id="cv" className="panel match-panel">
       <div className="match-copy">
@@ -56,21 +43,6 @@ export function CvIntake({
         </label>
         <button className="primary-action match-button" type="button" onClick={onMatch} disabled={isMatching}>
           <Sparkles size={18} aria-hidden="true" /> {isMatching ? "Подбираю..." : "Подобрать вакансии"}
-        </button>
-      </div>
-      <div className="vacancy-source-form">
-        <div className="match-copy">
-          <h2>Добавить реальную вакансию</h2>
-          <p>Вставьте ссылку на вакансию. Название, компания, регион, язык и исходный текст будут заполнены автоматически.</p>
-        </div>
-        <div className="form-grid">
-          <label>
-            Ссылка на вакансию
-            <input value={vacancyDraft.source_url} onChange={(event) => updateVacancyDraft("source_url", event.target.value)} placeholder="https://..." />
-          </label>
-        </div>
-        <button className="primary-action secondary-action" type="button" onClick={onAddVacancy} disabled={isAddingVacancy}>
-          {isAddingVacancy ? "Добавляю..." : "Добавить вакансию и CV"}
         </button>
       </div>
     </section>
