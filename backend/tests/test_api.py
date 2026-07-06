@@ -93,11 +93,26 @@ def test_create_vacancy_accepts_source_description_and_generates_tailored_cv():
         assert "Sr. Lead Product Designer - Design System Frameworks" in text
         assert "Design Systems" in text
         assert "Automotive UX" in text
-        assert "Keywords" in text
-        assert "Skills" in text
-        assert "Experience" in text
-        assert "general" in text
-        assert "No unverified metrics" in text
+        assert "EXECUTIVE SUMMARY" in text
+        assert "SELECTED CAREER IMPACT" in text
+        assert "CORE EXPERTISE" in text
+        assert "EXPERIENCE" in text
+        assert "Key achievements" in text
+        assert "EDUCATION" in text
+        assert "TOOLS" in text
+        assert "CERTIFICATIONS" in text
+        assert "LANGUAGES" in text
+        assert "Led end-to-end product design" in text
+        assert "Tailored for:" not in text
+        assert "Fit:" not in text
+        assert "Vacancy Requirements Mirrored" not in text
+        assert "general" not in text
+        assert "No unverified metrics" not in text
+        assert "Adapt this" not in text
+        assert "Worked on" not in text
+        assert "Responsible for" not in text
+        assert "Participated in" not in text
+        assert "Helped" not in text
         assert "Vacancy Source" not in text
         assert "Vacancy Link" not in text
         assert "https://www.linkedin.com/jobs/example" not in text
@@ -132,13 +147,19 @@ def test_tailored_cv_uses_russian_for_russian_vacancy():
 
         document = Document(BytesIO(cv_response.content))
         text = "\n".join(paragraph.text for paragraph in document.paragraphs)
-        assert "Адаптировано под:" in text
-        assert "Профиль" in text
-        assert "Ключевые слова" in text
-        assert "Навыки" in text
-        assert "Опыт" in text
-        assert "общее" in text
-        assert "Без неподтвержденных метрик" in text
+        assert "ПРОФЕССИОНАЛЬНЫЙ ПРОФИЛЬ" in text
+        assert "КЛЮЧЕВОЙ КАРЬЕРНЫЙ ЭФФЕКТ" in text
+        assert "КЛЮЧЕВАЯ ЭКСПЕРТИЗА" in text
+        assert "ОПЫТ" in text
+        assert "Ключевые достижения" in text
+        assert "ОБРАЗОВАНИЕ" in text
+        assert "ИНСТРУМЕНТЫ" in text
+        assert "СЕРТИФИКАЦИИ" in text
+        assert "ЯЗЫКИ" in text
+        assert "Адаптировано под:" not in text
+        assert "Соответствие:" not in text
+        assert "общее" not in text
+        assert "Без неподтвержденных метрик" not in text
         assert "Profile" not in text
         assert "Skills" not in text
         assert "Experience" not in text
@@ -173,9 +194,9 @@ def test_tailored_cv_uses_vacancy_text_language_over_metadata():
 
         document = Document(BytesIO(cv_response.content))
         text = "\n".join(paragraph.text for paragraph in document.paragraphs)
-        assert "Profile" in text
-        assert "Skills" in text
-        assert "Experience" in text
+        assert "EXECUTIVE SUMMARY" in text
+        assert "CORE EXPERTISE" in text
+        assert "EXPERIENCE" in text
         assert "Профиль" not in text
         assert "Навыки" not in text
         assert "Опыт" not in text
@@ -394,15 +415,28 @@ def test_analysis_from_cv_links_every_row_to_tailored_cv_docx():
         text = "\n".join(paragraph.text for paragraph in document.paragraphs)
         assert "ALEKSANDR GRENKOV" in text
         assert first["title"] in text
-        assert "Keywords" in text
-        assert "Skills" in text
-        assert "Experience" in text
-        assert "general" in text
+        assert "EXECUTIVE SUMMARY" in text
+        assert "SELECTED CAREER IMPACT" in text
+        assert "CORE EXPERTISE" in text
+        assert "EXPERIENCE" in text
+        assert "Key achievements" in text
+        assert "EDUCATION" in text
+        assert "TOOLS" in text
+        assert "CERTIFICATIONS" in text
+        assert "LANGUAGES" in text
         assert "Exact Match Keywords" not in text
         assert "Google XYZ Tailored Bullets" not in text
         assert "Selected Experience" not in text
         assert "Adaptation Strategy" not in text
         assert "Recruiter-Safe Notes" not in text
+        assert "Tailored for:" not in text
+        assert "Fit:" not in text
+        assert "No unverified metrics" not in text
+        assert "Adapt this" not in text
+        assert "Worked on" not in text
+        assert "Responsible for" not in text
+        assert "Participated in" not in text
+        assert "Helped" not in text
         assert "Vacancy Source" not in text
         assert "Vacancy Link" not in text
         assert "English B2" in text

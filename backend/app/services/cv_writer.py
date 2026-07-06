@@ -59,7 +59,7 @@ def build_master_cv_document(profile: CandidateProfile) -> BytesIO:
         "Product Designer — Information Technology Factory | 2022-2023",
         [
             "Simplified city-scale operator workflows by designing dashboards, parking apps, and transport-system interfaces for monitoring and control scenarios.",
-            "Created mobile parking app experiences by translating research, user flows, and information architecture into Android and iOS interfaces.",
+            "Delivered mobile parking app experiences by translating research, user flows, and information architecture into Android and iOS interfaces.",
         ],
     )
     _add_experience_template(
@@ -74,7 +74,7 @@ def build_master_cv_document(profile: CandidateProfile) -> BytesIO:
         document,
         "Product Designer — ABBYY Software House",
         [
-            "Designed UI/UX for international software products by structuring product flows and interface patterns for Lingvo and PDF Transformer scenarios.",
+            "Delivered UI/UX for international software products by structuring product flows and interface patterns for Lingvo and PDF Transformer scenarios.",
         ],
     )
     document.add_heading("Selected Projects", level=2)
@@ -109,78 +109,298 @@ def build_master_cv_document(profile: CandidateProfile) -> BytesIO:
 
 def build_tailored_cv_document(profile: CandidateProfile, vacancy: Vacancy) -> BytesIO:
     if _is_russian_vacancy(vacancy):
-        return _build_russian_tailored_cv_document(profile, vacancy)
+        return _build_russian_tailored_resume_document(profile, vacancy)
+    return _build_english_tailored_resume_document(profile, vacancy)
 
+
+def _build_english_tailored_resume_document(profile: CandidateProfile, vacancy: Vacancy) -> BytesIO:
     document = _base_document()
-    _add_title(document, "ALEKSANDR GRENKOV", vacancy.tailored_headline or vacancy.title)
-    document.add_paragraph(f"Tailored for: {vacancy.company} — {vacancy.title}")
-    document.add_paragraph(f"Fit: {vacancy.fit_score} / {vacancy.priority}")
-    document.add_heading("Profile", level=2)
+    _add_title(document, profile.name.upper() or "ALEKSANDR GRENKOV", vacancy.title or "Lead Product Designer")
+    document.add_paragraph(_headline_tags(vacancy))
+
+    document.add_heading("EXECUTIVE SUMMARY", level=2)
     document.add_paragraph(
-        f"Lead Product Designer aligned to {vacancy.title}, with 10+ years across product design, "
-        "UX strategy, design systems, automotive UX, voice UX, smart city systems, enterprise interfaces, "
-        "telecom, B2B/B2C products, and mobile UX. English B2."
+        f"Lead Product Designer with 10+ years of experience delivering digital products aligned with {vacancy.title}, "
+        f"with deep expertise in {_domain_focus(vacancy)}."
     )
-    document.add_heading("Keywords", level=2)
-    _add_bullets(document, _split_keywords(vacancy.top_match_keywords or vacancy.vacancy_keywords))
-    if vacancy.requirements:
-        document.add_heading("Vacancy Requirements Mirrored", level=2)
-        _add_bullets(document, _split_keywords(vacancy.requirements))
-    if vacancy.responsibilities:
-        document.add_heading("Vacancy Responsibilities Mirrored", level=2)
-        _add_bullets(document, _split_keywords(vacancy.responsibilities))
-    document.add_heading("Skills", level=2)
-    _add_bullets(document, _tailored_bullets(vacancy))
-    document.add_heading("Experience", level=2)
-    for heading, bullets in _experience_blocks(vacancy):
+    document.add_paragraph(
+        "Expert in transforming complex technical systems into intuitive customer experiences through Product Strategy, "
+        "UX Leadership, Design Systems, Human-Centered AI and cross-functional product delivery."
+    )
+    document.add_paragraph(
+        f"Led end-to-end product design for voice assistants, automotive HMI, enterprise platforms and consumer products "
+        f"while partnering with Product Managers, Engineering, AI, Research and Executive Leadership for {vacancy.company or 'product teams'}."
+    )
+
+    document.add_heading("CORE EXPERTISE", level=2)
+    _add_bullets(document, _core_expertise(vacancy))
+
+    document.add_heading("SELECTED CAREER IMPACT", level=2)
+    _add_bullets(document, _career_impact_bullets(vacancy))
+
+    document.add_heading("EXPERIENCE", level=2)
+    for heading, description, bullets in _resume_experience_blocks(vacancy):
         paragraph = document.add_paragraph()
         paragraph.add_run(heading).bold = True
+        document.add_paragraph(description)
+        key = document.add_paragraph()
+        key.add_run("Key achievements").bold = True
         _add_bullets(document, bullets)
-    document.add_heading("general", level=2)
-    document.add_paragraph(vacancy.adaptation_strategy)
-    document.add_paragraph(vacancy.gaps_risks)
-    document.add_paragraph("No unverified metrics, no inflated language claim, no engineering claim outside product/UX ownership, no application-sent claim.")
+
+    document.add_heading("EDUCATION", level=2)
+    document.add_paragraph("Education details available upon request.")
+    document.add_heading("TOOLS", level=2)
+    document.add_paragraph("Figma; Miro; Jira; Confluence; Adobe Creative Suite; Prototyping; Design Systems; UX Research")
+    document.add_heading("CERTIFICATIONS", level=2)
+    document.add_paragraph("Relevant product design, UX and leadership certifications available upon request.")
+    document.add_heading("LANGUAGES", level=2)
+    document.add_paragraph(profile.languages or "Russian native; English B2")
     return _save(document)
 
 
-def _build_russian_tailored_cv_document(profile: CandidateProfile, vacancy: Vacancy) -> BytesIO:
+def _build_russian_tailored_resume_document(profile: CandidateProfile, vacancy: Vacancy) -> BytesIO:
     document = _base_document()
-    _add_title(document, "ALEKSANDR GRENKOV", vacancy.title or vacancy.tailored_headline, language="ru")
-    document.add_paragraph(f"Адаптировано под: {vacancy.company} — {vacancy.title}")
-    document.add_paragraph(f"Соответствие: {vacancy.fit_score} / {_priority_label_ru(vacancy.priority)}")
-    document.add_heading("Профиль", level=2)
+    _add_title(document, profile.name.upper() or "ALEKSANDR GRENKOV", vacancy.title or "Ведущий продуктовый дизайнер", language="ru")
+    document.add_paragraph(_headline_tags(vacancy, language="ru"))
+
+    document.add_heading("ПРОФЕССИОНАЛЬНЫЙ ПРОФИЛЬ", level=2)
     document.add_paragraph(
-        f"Ведущий продуктовый дизайнер под задачу «{vacancy.title}»: 10+ лет опыта в продуктовом дизайне, "
-        "UX-стратегии, дизайн-системах, автомобильных интерфейсах, голосовом UX, smart city, "
-        "enterprise-интерфейсах, telecom, B2B/B2C продуктах и мобильном UX. Английский B2."
+        f"Ведущий продуктовый дизайнер с опытом 10+ лет в создании цифровых продуктов под задачи роли «{vacancy.title}», "
+        f"с сильной экспертизой в направлениях: {_domain_focus(vacancy, language='ru')}."
     )
-    document.add_heading("Ключевые слова", level=2)
-    _add_bullets(document, _split_keywords(vacancy.top_match_keywords or vacancy.vacancy_keywords))
-    if vacancy.requirements:
-        document.add_heading("Требования вакансии", level=2)
-        _add_bullets(document, _split_keywords(vacancy.requirements))
-    if vacancy.responsibilities:
-        document.add_heading("Задачи вакансии", level=2)
-        _add_bullets(document, _split_keywords(vacancy.responsibilities))
-    document.add_heading("Навыки", level=2)
-    _add_bullets(document, _tailored_bullets(vacancy, language="ru"))
-    document.add_heading("Опыт", level=2)
-    for heading, bullets in _experience_blocks(vacancy, language="ru"):
+    document.add_paragraph(
+        "Сильная сторона — превращать сложные технические системы в понятный клиентский опыт через продуктовую стратегию, "
+        "UX-лидерство, дизайн-системы, Human-Centered AI и системное взаимодействие с командами продукта и разработки."
+    )
+    document.add_paragraph(
+        f"Вел end-to-end продуктовый дизайн голосовых ассистентов, автомобильных HMI, enterprise-платформ и consumer-продуктов "
+        f"во взаимодействии с Product Management, Engineering, AI, Research и руководством."
+    )
+
+    document.add_heading("КЛЮЧЕВАЯ ЭКСПЕРТИЗА", level=2)
+    _add_bullets(document, _core_expertise(vacancy, language="ru"))
+
+    document.add_heading("КЛЮЧЕВОЙ КАРЬЕРНЫЙ ЭФФЕКТ", level=2)
+    _add_bullets(document, _career_impact_bullets(vacancy, language="ru"))
+
+    document.add_heading("ОПЫТ", level=2)
+    for heading, description, bullets in _resume_experience_blocks(vacancy, language="ru"):
         paragraph = document.add_paragraph()
         paragraph.add_run(heading).bold = True
+        document.add_paragraph(description)
+        key = document.add_paragraph()
+        key.add_run("Ключевые достижения").bold = True
         _add_bullets(document, bullets)
-    document.add_heading("общее", level=2)
-    document.add_paragraph(
-        f"Резюме адаптировано под вакансию «{vacancy.title}»: акцент на релевантные ключевые слова, "
-        "доменный опыт и подтвержденные продуктовые задачи без преувеличений."
-    )
-    if vacancy.vacancy_keywords:
-        document.add_paragraph(f"Ключевой фокус адаптации: {vacancy.vacancy_keywords}.")
-    document.add_paragraph(
-        "Без неподтвержденных метрик, без завышения уровня языка, без инженерных заявлений вне продуктовой и UX-зоны ответственности, "
-        "без утверждения, что отклик уже отправлен."
-    )
+
+    document.add_heading("ОБРАЗОВАНИЕ", level=2)
+    document.add_paragraph("Информация об образовании предоставляется по запросу.")
+    document.add_heading("ИНСТРУМЕНТЫ", level=2)
+    document.add_paragraph("Figma; Miro; Jira; Confluence; Adobe Creative Suite; прототипирование; дизайн-системы; UX-исследования")
+    document.add_heading("СЕРТИФИКАЦИИ", level=2)
+    document.add_paragraph("Релевантные сертификаты в продуктовой, UX и leadership-практике предоставляются по запросу.")
+    document.add_heading("ЯЗЫКИ", level=2)
+    document.add_paragraph(profile.languages or "Русский: родной; английский: B2")
     return _save(document)
+
+
+def _headline_tags(vacancy: Vacancy, language: str = "en") -> str:
+    tags = _core_expertise(vacancy, language=language)[:5]
+    return " • ".join(tags)
+
+
+def _domain_focus(vacancy: Vacancy, language: str = "en") -> str:
+    text = _vacancy_text(vacancy)
+    if language == "ru":
+        domains = ["продуктовая стратегия", "UX-стратегия", "дизайн-системы"]
+        if _has_any(text, "ai", "llm", "prompt", "voice", "голос", "ии"):
+            domains.append("AI и Voice UX")
+        if _has_any(text, "automotive", "hmi", "vehicle", "авто", "электромоб"):
+            domains.append("Automotive UX и HMI")
+        if _has_any(text, "enterprise", "saas", "dashboard", "workflow", "b2b"):
+            domains.append("Enterprise UX и сложные системы")
+        return ", ".join(dict.fromkeys(domains))
+    domains = ["Product Strategy", "UX Strategy", "Design Systems"]
+    if _has_any(text, "ai", "llm", "prompt", "voice", "conversation", "intent"):
+        domains.append("AI and Voice UX")
+    if _has_any(text, "automotive", "hmi", "vehicle", "mobility", "infotainment"):
+        domains.append("Automotive UX and HMI")
+    if _has_any(text, "enterprise", "saas", "dashboard", "workflow", "b2b"):
+        domains.append("Enterprise UX and complex systems")
+    return ", ".join(dict.fromkeys(domains))
+
+
+def _core_expertise(vacancy: Vacancy, language: str = "en") -> list[str]:
+    text = _vacancy_text(vacancy)
+    if language == "ru":
+        base = [
+            "Продуктовая стратегия",
+            "UX-стратегия",
+            "Дизайн-лидерство",
+            "Продуктовое исследование",
+            "UX-исследования",
+            "Кросс-функциональное взаимодействие",
+            "Дизайн-системы",
+            "Информационная архитектура",
+        ]
+        if _has_any(text, "ai", "llm", "prompt", "human-ai", "voice", "conversation", "intent", "голос", "ии"):
+            base.extend(["AI-продуктовый дизайн", "Human-AI Interaction", "Voice UX", "Conversational Design", "Intent Design", "Мультимодальные интерфейсы"])
+        if _has_any(text, "automotive", "hmi", "vehicle", "mobility", "infotainment", "avas", "авто", "электромоб"):
+            base.extend(["Automotive UX", "HMI", "IVI", "Infotainment", "AVAS", "Опыт водителя", "Mobility"])
+        if _has_any(text, "enterprise", "saas", "dashboard", "workflow", "operator", "b2b", "data"):
+            base.extend(["Enterprise UX", "SaaS", "Дашборды", "Оптимизация workflow", "Сложные системы", "Визуализация данных"])
+        if _has_any(text, "component", "tokens", "variables", "governance", "дизайн-систем"):
+            base.extend(["Библиотека компонентов", "Design Tokens", "Figma Variables", "Design Governance", "DesignOps"])
+        base.extend(_split_keywords(vacancy.top_match_keywords or vacancy.vacancy_keywords)[:8])
+        return list(dict.fromkeys(base))
+    base = [
+        "Product Strategy",
+        "UX Strategy",
+        "Design Leadership",
+        "Product Discovery",
+        "User Research",
+        "Cross-functional Collaboration",
+        "Design Systems",
+        "Information Architecture",
+    ]
+    if _has_any(text, "ai", "llm", "prompt", "human-ai", "voice", "conversation", "intent", "голос", "ии"):
+        base.extend(["AI Product Design", "Human-AI Interaction", "Voice UX", "Conversational Design", "Intent Design", "Multimodal Interfaces"])
+    if _has_any(text, "automotive", "hmi", "vehicle", "mobility", "infotainment", "avas", "авто", "электромоб"):
+        base.extend(["Automotive UX", "HMI", "IVI", "Infotainment", "AVAS", "Driver Experience", "Mobility"])
+    if _has_any(text, "enterprise", "saas", "dashboard", "workflow", "operator", "b2b", "data"):
+        base.extend(["Enterprise UX", "SaaS", "Dashboard Design", "Workflow Optimization", "Complex Systems", "Data Visualization"])
+    if _has_any(text, "component", "tokens", "variables", "governance", "дизайн-систем"):
+        base.extend(["Component Library", "Design Tokens", "Figma Variables", "Design Governance", "DesignOps"])
+    base.extend(_split_keywords(vacancy.top_match_keywords or vacancy.vacancy_keywords)[:8])
+    return list(dict.fromkeys(base))
+
+
+def _career_impact_bullets(vacancy: Vacancy, language: str = "en") -> list[str]:
+    text = _vacancy_text(vacancy)
+    if language == "ru":
+        bullets = [
+            "Вел UX-стратегию для голосового ассистента электромобиля, определив conversational architecture, intents, prompts и принципы мультимодального взаимодействия.",
+            "Сформировал продуктовую основу для автомобильных HMI-сценариев, связав customer journeys, системную логику интерфейса и требования инженерных команд.",
+            "Укрепил дизайн-системный подход в B2B и B2C продуктах, выстроив повторно используемые паттерны, дизайн-ревью и принципы governance.",
+            "Поставил enterprise UX-решения для smart city и транспортной инфраструктуры, упростив операторские сценарии для систем городского масштаба.",
+        ]
+        if _has_any(text, "voice", "conversation", "intent", "prompt", "голос"):
+            bullets.insert(1, "Определил voice UX framework, который связал tone of voice, prompts, intents и визуальные состояния в единый пользовательский опыт.")
+        if _has_any(text, "automotive", "hmi", "vehicle", "avas", "авто", "электромоб"):
+            bullets.insert(2, "Вел продуктовую UX-логику звуковой идентичности и AVAS для production-ready электромобиля.")
+        if _has_any(text, "component", "tokens", "design system", "дизайн-систем"):
+            bullets.append("Масштабировал дизайн-системные практики через component library, Figma-подходы, governance и совместную работу с engineering.")
+        return bullets[:7]
+    bullets = [
+        "Led UX strategy for the voice assistant powering an electric vehicle by defining conversational architecture, intents, prompts and multimodal interaction principles.",
+        "Established a product foundation for automotive HMI experiences by connecting customer journeys, interface logic and engineering constraints.",
+        "Scaled Design System practices across B2B and B2C products by introducing reusable patterns, design reviews and governance principles.",
+        "Delivered enterprise UX solutions for smart city and transportation infrastructure by simplifying operator workflows for city-scale systems.",
+    ]
+    if _has_any(text, "voice", "conversation", "intent", "prompt"):
+        bullets.insert(1, "Defined a Voice UX framework by aligning tone of voice, prompts, intents and visual states into a consistent product experience.")
+    if _has_any(text, "automotive", "hmi", "vehicle", "avas"):
+        bullets.insert(2, "Owned product UX logic for vehicle sound identity and AVAS by partnering with engineering and research teams from concept to production readiness.")
+    if _has_any(text, "component", "tokens", "design system", "governance"):
+        bullets.append("Accelerated product consistency by establishing component library principles, Figma workflows and design-system governance.")
+    return bullets[:7]
+
+
+def _resume_experience_blocks(vacancy: Vacancy, language: str = "en") -> list[tuple[str, str, list[str]]]:
+    text = _vacancy_text(vacancy)
+    if language == "ru":
+        atom_bullets = [
+            "Вел end-to-end продуктовый дизайн in-car голосового ассистента, определив conversational architecture, prompts, intents, tone of voice и мультимодальную UX-логику.",
+            "Определил UX-принципы для HMI-сценариев электромобиля, связав customer journeys, продуктовые требования и инженерные ограничения в масштабируемую систему интерфейсных решений.",
+            "Партнерски работал с Engineering, AI, Product и Research командами, чтобы объединить визуальное, голосовое и звуковое взаимодействие в цельный пользовательский опыт.",
+        ]
+        if _has_any(text, "design system", "component", "tokens", "дизайн-систем"):
+            atom_bullets.append("Укрепил дизайн-системный подход для сложных automotive-сценариев, связав reusable patterns, interface states и продуктовую логику.")
+        return [
+            (
+                "Lead Product Designer — ATOM, Electric Vehicle Startup | 2023-2026",
+                "Автомобильный продуктовый дизайн, voice UX, HMI, AI interaction и sound experience для электромобиля.",
+                atom_bullets,
+            ),
+            (
+                "Product Designer — Information Technology Factory | 2022-2023",
+                "Enterprise UX для smart city, транспорта, парковочных систем, dashboards и операторских интерфейсов.",
+                [
+                    "Поставил city-scale operator workflows, преобразовав сложные транспортные и парковочные процессы в понятные dashboards, mobile flows и интерфейсы мониторинга.",
+                    "Оптимизировал мобильный опыт парковочного приложения, связав user research, information architecture, UX flows и production-ready интерфейсные решения.",
+                ],
+            ),
+            (
+                "Lead Product Designer — VEON / Beeline Russia",
+                "Telecom-продукты B2B/B2C, дизайн-системы, UX-исследования и координация продуктовых дизайн-команд.",
+                [
+                    "Масштабировал продуктовый дизайн через design-system practices, reusable UI patterns, design reviews и взаимодействие с product и engineering командами.",
+                    "Усилал delivery сложных telecom-продуктов, переводя неоднозначные требования в ясные user flows, prototypes и интерфейсные решения.",
+                ],
+            ),
+            (
+                "Product Designer — ABBYY Software House",
+                "Международные software-продукты, сложные пользовательские сценарии и интерфейсная архитектура.",
+                [
+                    "Доставил UX/UI-решения для международных software-продуктов, структурировав product flows, interaction patterns и интерфейсную архитектуру для Lingvo и PDF Transformer.",
+                ],
+            ),
+        ]
+
+    atom_bullets = [
+        "Led end-to-end product design of the in-vehicle voice assistant by defining conversational architecture, prompts, intents, tone of voice and multimodal UX logic.",
+        "Defined UX principles for electric-vehicle HMI scenarios by connecting customer journeys, product requirements and engineering constraints into a scalable interaction system.",
+        "Partnered with Engineering, AI, Product and Research teams to deliver multimodal user experiences combining visual, voice and audio interaction.",
+    ]
+    if _has_any(text, "design system", "component", "tokens", "governance"):
+        atom_bullets.append("Established design-system principles for complex automotive scenarios by aligning reusable patterns, interface states and product logic.")
+    return [
+        (
+            "Lead Product Designer — ATOM, Electric Vehicle Startup | 2023-2026",
+            "Automotive product design, Voice UX, HMI, AI interaction and sound experience for an electric vehicle.",
+            atom_bullets,
+        ),
+        (
+            "Product Designer — Information Technology Factory | 2022-2023",
+            "Enterprise UX for smart city, transportation, parking systems, dashboards and operator interfaces.",
+            [
+                "Delivered city-scale operator workflows by transforming complex transportation and parking processes into clear dashboards, mobile flows and monitoring interfaces.",
+                "Optimized the mobile parking experience by connecting user research, information architecture, UX flows and production-ready interface solutions.",
+            ],
+        ),
+        (
+            "Lead Product Designer — VEON / Beeline Russia",
+            "B2B/B2C telecom products, design systems, UX research and product design team coordination.",
+            [
+                "Scaled product design through design-system practices, reusable UI patterns, design reviews and close partnership with product and engineering teams.",
+                "Transformed ambiguous telecom requirements into clear user flows, prototypes and interface solutions for complex B2B and B2C products.",
+            ],
+        ),
+        (
+            "Product Designer — ABBYY Software House",
+            "International software products, complex user scenarios and interface architecture.",
+            [
+                "Delivered UX/UI solutions for international software products by structuring product flows, interaction patterns and interface architecture for Lingvo and PDF Transformer.",
+            ],
+        ),
+    ]
+
+
+def _vacancy_text(vacancy: Vacancy) -> str:
+    return " ".join(
+        [
+            vacancy.title,
+            vacancy.company,
+            vacancy.description_raw,
+            vacancy.requirements,
+            vacancy.responsibilities,
+            vacancy.vacancy_keywords,
+            vacancy.top_match_keywords,
+        ]
+    ).lower()
+
+
+def _has_any(text: str, *terms: str) -> bool:
+    return any(term in text for term in terms)
 
 
 def _base_document() -> Document:
@@ -225,109 +445,6 @@ def _split_keywords(value: str) -> list[str]:
     return [item.strip() for item in value.split(";") if item.strip()]
 
 
-def _tailored_bullets(vacancy: Vacancy, language: str = "en") -> list[str]:
-    keywords = " ".join(
-        [
-            vacancy.top_match_keywords,
-            vacancy.vacancy_keywords,
-            vacancy.description_raw,
-            vacancy.requirements,
-            vacancy.responsibilities,
-        ]
-    ).lower()
-    if language == "ru":
-        bullets = [
-            f"Сформировал позиционирование под роль «{vacancy.title}», сопоставив ключевые слова вакансии с подтвержденным опытом в продуктовом дизайне, UX-стратегии и дизайн-системах.",
-            "Структурировал сложные пользовательские сценарии, переводя требования продукта, инженерные ограничения и исследования в информационную архитектуру, прототипы и повторно используемые паттерны.",
-        ]
-        if "automotive" in keywords or "hmi" in keywords or "vehicle" in keywords or "авто" in keywords:
-            bullets.append("Проектировал автомобильные UX-паттерны: голосовой ассистент, HMI-сценарии, звуковую идентичность, AVAS, промпты, интенты и tone of voice.")
-        if "voice" in keywords or "conversation" in keywords or "prompt" in keywords or "intent" in keywords or "голос" in keywords:
-            bullets.append("Разрабатывал conversational UX: сценарии диалога, промпты, интенты, поведение ассистента, tone of voice и мультимодальную логику.")
-        if "design systems" in keywords or "components" in keywords or "governance" in keywords or "дизайн-систем" in keywords:
-            bullets.append("Стандартизировал продуктовый опыт через дизайн-системы, компонентные библиотеки, governance-подход и регулярные дизайн-ревью.")
-        if "smart city" in keywords or "transport" in keywords or "operator" in keywords or "парков" in keywords:
-            bullets.append("Упрощал городские и операторские сценарии через dashboards, транспортные системы, парковочные приложения и интерфейсы мониторинга.")
-        if "telecom" in keywords or "b2b" in keywords or "b2c" in keywords:
-            bullets.append("Работал с telecom-продуктами B2B/B2C, исследовательскими сценариями и масштабируемыми интерфейсными системами.")
-        return bullets[:6]
-    bullets = [
-        f"Established a tailored {vacancy.title} positioning by mapping the role keywords to verified product design, UX strategy, and design-system experience.",
-        "Structured complex user journeys by translating product, engineering, and research inputs into information architecture, prototypes, and reusable interaction patterns.",
-    ]
-    if "automotive" in keywords or "hmi" in keywords or "vehicle" in keywords:
-        bullets.append("Defined in-vehicle UX patterns by designing voice assistant logic, HMI scenarios, sound identity, AVAS, prompts, intents, and tone of voice.")
-    if "voice" in keywords or "conversation" in keywords or "prompt" in keywords or "intent" in keywords:
-        bullets.append("Established conversational UX flows by defining prompts, intents, assistant behavior, tone of voice, and multimodal interaction logic.")
-    if "design systems" in keywords or "components" in keywords or "governance" in keywords:
-        bullets.append("Standardized product experience by shaping reusable design-system patterns, governance practices, and cross-team design review.")
-    if "smart city" in keywords or "transport" in keywords or "operator" in keywords:
-        bullets.append("Simplified city-scale operational workflows by designing dashboards, transport systems, parking apps, and operator control interfaces.")
-    if "telecom" in keywords or "b2b" in keywords or "b2c" in keywords:
-        bullets.append("Partnered across telecom product teams by designing B2B/B2C digital products, research-informed flows, and scalable interface systems.")
-    return bullets[:6]
-
-
-def _experience_blocks(vacancy: Vacancy, language: str = "en") -> list[tuple[str, list[str]]]:
-    if language == "ru":
-        return [
-            (
-                "Ведущий продуктовый дизайнер — ATOM, стартап электромобиля | 2023-2026",
-                [
-                    "Вел продуктовый дизайн in-car голосового ассистента: conversational architecture, промпты, интенты, tone of voice и мультимодальный UX.",
-                    "Проектировал UX-логику звуковой идентичности автомобиля, AVAS и внутренних звуковых индикаций совместно с инженерными и исследовательскими командами.",
-                ],
-            ),
-            (
-                "Продуктовый дизайнер — Information Technology Factory | 2022-2023",
-                [
-                    "Проектировал UX/UI для управления трафиком, контроля скорости, парковочных систем, городских dashboards и операторских интерфейсов.",
-                    "Создавал Android и iOS сценарии парковочного приложения: от исследований и информационной архитектуры до визуального дизайна.",
-                ],
-            ),
-            (
-                "Ведущий продуктовый дизайнер — VEON / Beeline Russia",
-                [
-                    "Вел дизайн B2B/B2C telecom-продуктов, дизайн-систем, UX-исследований и координацию внешних дизайн-команд.",
-                ],
-            ),
-            (
-                "Продуктовый дизайнер — ABBYY Software House",
-                [
-                    "Проектировал UI/UX для международных software-продуктов, включая Lingvo и PDF Transformer.",
-                ],
-            ),
-        ]
-    return [
-        (
-            "Lead Product Designer — ATOM, Electric Vehicle Startup | 2023–2026",
-            [
-                "Led product design for an in-car voice assistant: conversational architecture, prompts, intents, tone of voice, and multimodal UX.",
-                "Defined UX logic for vehicle sound identity, AVAS, and internal sound indication systems with engineering and research teams.",
-            ],
-        ),
-        (
-            "Product Designer — Information Technology Factory | 2022–2023",
-            [
-                "Designed UX/UI for traffic control, speed monitoring, parking management, city dashboards, and operator interfaces.",
-                "Created Android and iOS parking app experiences from research and information architecture to visual design.",
-            ],
-        ),
-        (
-            "Lead Product Designer — VEON / Beeline Russia",
-            [
-                "Led design for B2B/B2C telecom products, design systems, UX research, and external design team coordination.",
-            ],
-        ),
-        (
-            "Product Designer — ABBYY Software House",
-            [
-                "Designed UI/UX for international software products, including Lingvo and PDF Transformer.",
-            ],
-        ),
-    ]
-
-
 def _is_russian_vacancy(vacancy: Vacancy) -> bool:
     language = vacancy.language.lower()
     text = " ".join([vacancy.title, vacancy.description_raw, vacancy.requirements, vacancy.responsibilities])
@@ -338,15 +455,6 @@ def _is_russian_vacancy(vacancy: Vacancy) -> bool:
     if "russian" in language and "english" not in language:
         return True
     return False
-
-
-def _priority_label_ru(priority: str) -> str:
-    return {
-        "Very High": "очень высокий приоритет",
-        "High": "высокий приоритет",
-        "Medium": "средний приоритет",
-        "Low": "низкий приоритет",
-    }.get(priority, priority)
 
 
 def _save(document: Document) -> BytesIO:
