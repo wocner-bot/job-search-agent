@@ -73,6 +73,43 @@ def test_collect_live_vacancies_reads_hh_and_telegram_sources():
     assert all(vacancy.cv_file_path == "" for vacancy in vacancies)
 
 
+def test_collect_live_vacancies_reads_wantapply_source():
+    profile = CandidateProfile(
+        raw_cv_text="Lead Product Designer Automotive UX HMI Design Systems English B2",
+        target_titles="Lead Product Designer / Automotive UX Designer",
+        experience_areas="Automotive UX; HMI; Design Systems",
+    )
+    seen_urls: list[str] = []
+
+    def fake_text(url: str) -> str:
+        seen_urls.append(url)
+        if "wantapply.com/jobs/product-designer" in url:
+            return r"""
+            <script>self.__next_f.push([1,"{\"id\":\"abc-123\",\"title\":\"Senior Product Designer\",\"description\":\"Lead design systems and product UX for AI workflows\",\"url\":\"senior-product-designer-at-example\",\"companyName\":\"Example Labs\",\"workplaceTypes\":[\"remote\"],\"remote\":true,\"publishedAt\":\"2026-07-04T10:00:00.000Z\",\"company\":{\"name\":\"Example Labs\"},\"jobRegions\":[{\"name_en\":\"Europe\",\"name_ru\":\"Европа\"}]}"])</script>
+            """
+        return ""
+
+    vacancies = collect_live_vacancies(
+        profile,
+        roles=ROLE_RECOMMENDATIONS[:1],
+        fetch_json=lambda _url, _params: {"items": []},
+        fetch_text=fake_text,
+        today=date(2026, 7, 6),
+        telegram_channels=(),
+        per_role_limit=1,
+        max_results=10,
+    )
+
+    assert any("https://wantapply.com/jobs/product-designer" in url for url in seen_urls)
+    assert len(vacancies) == 1
+    assert vacancies[0].source == "WantApply"
+    assert vacancies[0].source_url == "https://wantapply.com/jobs/senior-product-designer-at-example"
+    assert vacancies[0].company == "Example Labs"
+    assert vacancies[0].location == "Remote / Europe"
+    assert vacancies[0].posted == "2026-07-04"
+    assert "7 days" in vacancies[0].date_status
+
+
 def test_collect_live_vacancies_reads_hh_public_page_when_api_is_blocked():
     profile = CandidateProfile(raw_cv_text="Lead Product Designer", target_titles="Lead Product Designer")
 

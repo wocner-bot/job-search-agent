@@ -18,6 +18,8 @@ from app.status import ApplicationStatus
 HH_API_URL = "https://api.hh.ru/vacancies"
 HH_SOURCE = "HH.ru"
 LINKEDIN_SOURCE = "LinkedIn"
+WANTAPPLY_SOURCE = "WantApply"
+WANTAPPLY_BASE_URL = "https://wantapply.com"
 DESIGN_SIGNAL_TERMS = (
     "product designer",
     "ux",
@@ -82,6 +84,8 @@ def collect_live_vacancies(
         for vacancy in _collect_linkedin_vacancies(role, fetch_text, per_role_limit):
             _append_unique(candidates, seen, vacancy)
         for vacancy in _collect_hh_vacancies(role, fetch_json, fetch_text, date_from, per_role_limit):
+            _append_unique(candidates, seen, vacancy)
+        for vacancy in _collect_wantapply_vacancies(role, fetch_text, date_from, per_role_limit):
             _append_unique(candidates, seen, vacancy)
     for vacancy in _collect_telegram_vacancies(profile, roles, fetch_text, date_from, telegram_channels):
         _append_unique(candidates, seen, vacancy)
@@ -274,6 +278,120 @@ def _parse_linkedin_cards(page: str, role: RoleRecommendation) -> list[Vacancy]:
             )
         )
     return cards
+
+
+def _collect_wantapply_vacancies(
+    role: RoleRecommendation,
+    fetch_text: TextFetcher,
+    date_from: date,
+    per_role_limit: int,
+) -> list[Vacancy]:
+    rows: list[Vacancy] = []
+    seen_urls: set[str] = set()
+    for slug in _wantapply_category_slugs(role):
+        try:
+            page = fetch_text(f"{WANTAPPLY_BASE_URL}/jobs/{slug}")
+        except Exception:
+            continue
+        for vacancy in _parse_wantapply_jobs(page, role, date_from):
+            if vacancy.source_url in seen_urls:
+                continue
+            seen_urls.add(vacancy.source_url)
+            rows.append(vacancy)
+            if per_role_limit > 0 and len(rows) >= per_role_limit:
+                return rows
+    return rows
+
+
+def _wantapply_category_slugs(role: RoleRecommendation) -> tuple[str, ...]:
+    slugs = [_web_slug(role.title)]
+    role_text = " ".join([role.title, *role.keywords]).lower()
+    if "product" in role_text and "design" in role_text:
+        slugs.append("product-designer")
+    if "ux" in role_text or "ui" in role_text:
+        slugs.append("ux-ui-designer")
+    if "design" in role_text or "designer" in role_text:
+        slugs.append("design")
+    return tuple(dict.fromkeys(slug for slug in slugs if slug))
+
+
+def _parse_wantapply_jobs(page: str, role: RoleRecommendation, date_from: date) -> list[Vacancy]:
+    rows: list[Vacancy] = []
+    for raw_job in _wantapply_job_fragments(page):
+        title = _json_field(raw_job, "title")
+        slug = _json_field(raw_job, "url")
+        if not title or not slug:
+            continue
+        description = _clean_text(_decode_next_text(_json_field(raw_job, "description")))
+        company = _json_field(raw_job, "companyName") or _json_field(raw_job, "name") or "WantApply employer"
+        source_url = f"{WANTAPPLY_BASE_URL}/jobs/{slug}"
+        published = _parse_date(_json_field(raw_job, "publishedAt"))
+        if published and published < date_from:
+            continue
+        location = _wantapply_location(raw_job)
+        summary = " ".join(part for part in [title, company, location, description] if part)
+        if not _is_relevant_role_card(summary, role):
+            continue
+        rows.append(
+            Vacancy(
+                external_id=f"WA-{_json_field(raw_job, 'id') or _slug(slug)}",
+                source=WANTAPPLY_SOURCE,
+                company=company,
+                title=title,
+                location=location,
+                posted=published.isoformat() if published else "",
+                date_status="verified within 7 days",
+                language=infer_vacancy_language(summary),
+                fit_score=0,
+                priority="Medium",
+                submit_status=ApplicationStatus.DRAFT,
+                next_action="Open WantApply vacancy, verify fit and contact route, then send tailored CV manually.",
+                source_url=source_url,
+                description_raw=summary,
+                vacancy_keywords=extract_vacancy_keywords(title, summary),
+                tailored_headline=role.headline,
+                top_match_keywords="; ".join(role.keywords),
+                gaps_risks="Verify WantApply vacancy status, application route, location, and salary terms before sending.",
+                adaptation_strategy=role.strategy,
+            )
+        )
+    return rows
+
+
+def _wantapply_job_fragments(page: str) -> list[str]:
+    text = _decode_next_text(page)
+    fragments: list[str] = []
+    for match in re.finditer(r'\{(?=[^{}]*"title":)(?=[\s\S]{0,5000}?"publishedAt":)[\s\S]*?\}(?=,\{"id"|\]\}|\]\)|</script>)', text):
+        fragment = match.group(0)
+        if '"companyName"' in fragment and '"url"' in fragment:
+            fragments.append(fragment)
+    return fragments
+
+
+def _wantapply_location(raw_job: str) -> str:
+    parts: list[str] = []
+    if re.search(r'"remote":true', raw_job):
+        parts.append("Remote")
+    region_names = re.findall(r'"name_en":"([^"]+)"', raw_job)
+    for name in region_names:
+        cleaned = _clean_text(_decode_next_text(name))
+        if cleaned and cleaned not in parts:
+            parts.append(cleaned)
+    return " / ".join(parts)
+
+
+def _json_field(fragment: str, field: str) -> str:
+    return _decode_next_text(_extract_first_match(fragment, rf'"{re.escape(field)}":"((?:\\.|[^"\\])*)"'))
+
+
+def _decode_next_text(value: str) -> str:
+    if not value:
+        return ""
+    try:
+        value = bytes(value, "utf-8").decode("unicode_escape")
+    except UnicodeDecodeError:
+        pass
+    return html.unescape(value)
 
 
 def _collect_telegram_vacancies(
@@ -590,6 +708,10 @@ def _hh_id(value: str) -> str:
 def _slug(value: str) -> str:
     slug = re.sub(r"[^a-zA-Z0-9]+", "-", value).strip("-").upper()
     return slug or "ROLE"
+
+
+def _web_slug(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
 
 
 def _format_posted(value: str | None) -> str:
