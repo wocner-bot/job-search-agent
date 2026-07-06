@@ -38,6 +38,7 @@ assert.match(html, /20 должностей/);
 assert.match(html, /Подобрать вакансии/);
 assert.match(html, /lucide-wand-sparkles/);
 assert.match(styles, /\.primary-action\s*\{[^}]*linear-gradient/s);
+assert.match(styles, /\.upload-box input::file-selector-button\s*\{[^}]*background: #050708;/s);
 assert.match(html, /upload-actions/);
 assert.match(html, /Vacancy Link/);
 assert.match(html, /Source Text/);

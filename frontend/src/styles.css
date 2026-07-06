@@ -196,6 +196,23 @@ select:focus {
   max-width: 100%;
 }
 
+.upload-box input::file-selector-button {
+  background: #050708;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 700;
+  margin-right: var(--space-field);
+  min-height: 36px;
+  padding: 8px 12px;
+}
+
+.upload-box input::file-selector-button:hover {
+  background: #111719;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
 .upload-box strong {
   color: var(--muted);
   font-size: 13px;
