@@ -19,8 +19,10 @@ assert.match(html, /Source Text/);
 assert.match(html, /Tailored CV/);
 assert.match(html, /Master CV Template/);
 assert.match(html, /Добавить реальную вакансию/);
-assert.match(html, /Исходник вакансии/);
-assert.match(html, /LinkedIn/);
+assert.match(html, /Ссылка на вакансию/);
+assert.match(html, /Название, компания, регион, язык и исходный текст будут заполнены автоматически/);
+assert.doesNotMatch(html, /Исходник вакансии/);
+assert.doesNotMatch(html, /Выберите источник/);
 
 const emptyIntake = renderToStaticMarkup(
   <CvIntake
@@ -48,20 +50,10 @@ const emptyIntake = renderToStaticMarkup(
   />
 );
 
-assert.match(emptyIntake, /Выберите источник/);
-assert.match(emptyIntake, /Выберите язык/);
-[
-  "https://hh.ru/",
-  "Telegram @wantapply_design",
-  "Telegram @young_relocate",
-  "Telegram @vdhl_good",
-  "Telegram @moskovskayarabota",
-  "Telegram @professionalsjob",
-  "Telegram @naudalenkebro",
-  "Telegram @zapwork"
-].forEach((source) => assert.match(emptyIntake, new RegExp(source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))));
-assert.doesNotMatch(emptyIntake, /<option selected="">LinkedIn<\/option>/);
-assert.doesNotMatch(emptyIntake, /<option selected="">English<\/option>/);
+assert.match(emptyIntake, /Ссылка на вакансию/);
+assert.doesNotMatch(emptyIntake, /Выберите язык/);
+assert.doesNotMatch(emptyIntake, /Requirements/);
+assert.doesNotMatch(emptyIntake, /Responsibilities/);
 
 const preloader = renderToStaticMarkup(<GlobalPreloader label="Обрабатываю данные..." />);
 assert.match(preloader, /global-preloader/);

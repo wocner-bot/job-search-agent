@@ -46,6 +46,35 @@ def test_create_vacancy_and_list_it():
         assert any(row["external_id"] == "MAN-1" for row in list_response.json())
 
 
+def test_create_vacancy_from_url_extracts_source_fields(monkeypatch):
+    reset_database()
+
+    class Extracted:
+        source = "HH.ru"
+        company = "Product Studio"
+        title = "Senior Product Designer"
+        location = "Remote"
+        language = "English"
+        description_raw = "Lead UX strategy, Figma components and design systems for product teams."
+
+    monkeypatch.setattr("app.api.routes.extract_vacancy_from_url", lambda _url: Extracted())
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/vacancies",
+            json={"source_url": "https://hh.ru/vacancy/555"},
+        )
+
+        assert response.status_code == 200
+        created = response.json()
+        assert created["source"] == "HH.ru"
+        assert created["company"] == "Product Studio"
+        assert created["title"] == "Senior Product Designer"
+        assert created["location"] == "Remote"
+        assert created["language"] == "English"
+        assert created["description_raw"].startswith("Lead UX strategy")
+        assert "Design Systems" in created["vacancy_keywords"]
+
+
 def test_create_vacancy_accepts_source_description_and_generates_tailored_cv():
     reset_database()
     with TestClient(app) as client:

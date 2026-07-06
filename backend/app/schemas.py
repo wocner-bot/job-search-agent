@@ -46,10 +46,10 @@ class VacancyRead(BaseModel):
 class VacancyCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    external_id: str
+    external_id: str = ""
     source: str = "Manual"
-    company: str
-    title: str
+    company: str = ""
+    title: str = ""
     location: str = ""
     language: str = ""
     source_url: str = ""

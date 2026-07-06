@@ -1,3 +1,4 @@
+import hashlib
 import re
 from pathlib import Path
 
@@ -18,6 +19,7 @@ from app.services.recruiter import ROLE_RECOMMENDATIONS, generate_role_recommend
 from app.services.scoring import score_vacancy
 from app.services.source_collector import collect_live_vacancies
 from app.services.vacancy_analysis import extract_vacancy_keywords, infer_vacancy_language
+from app.services.vacancy_url import extract_vacancy_from_url
 from app.status import assert_status_change_allowed
 
 router = APIRouter(prefix="/api")
@@ -66,25 +68,48 @@ def list_vacancies(session: Session = Depends(get_session)) -> list[Vacancy]:
 
 @router.post("/vacancies")
 def create_vacancy(payload: VacancyCreate, session: Session = Depends(get_session)) -> Vacancy:
+    source = payload.source
+    company = payload.company
+    title = payload.title
+    location = payload.location
+    language = payload.language
+    description_raw = payload.description_raw
+    requirements = payload.requirements
+    responsibilities = payload.responsibilities
+    if payload.source_url and not (company.strip() and title.strip() and description_raw.strip()):
+        try:
+            extracted = extract_vacancy_from_url(payload.source_url)
+        except Exception as error:
+            raise HTTPException(status_code=400, detail="Could not read vacancy page from URL.") from error
+        source = payload.source if payload.source != "Manual" else extracted.source
+        company = company or extracted.company
+        title = title or extracted.title
+        location = location or extracted.location
+        language = language or extracted.language
+        description_raw = description_raw or extracted.description_raw
+    if not payload.source_url and not (title.strip() and company.strip()):
+        raise HTTPException(status_code=400, detail="Vacancy URL or company and title are required")
+    if not title.strip():
+        raise HTTPException(status_code=400, detail="Could not extract vacancy title from URL")
     vacancy_keywords = extract_vacancy_keywords(
-        payload.title,
-        payload.description_raw,
-        payload.requirements,
-        payload.responsibilities,
+        title,
+        description_raw,
+        requirements,
+        responsibilities,
     )
     vacancy = Vacancy(
-        external_id=payload.external_id,
-        source=payload.source,
-        company=payload.company,
-        title=payload.title,
-        location=payload.location,
-        language=payload.language or infer_vacancy_language(
-            " ".join([payload.title, payload.description_raw, payload.requirements, payload.responsibilities])
+        external_id=payload.external_id or f"URL-{hashlib.sha1((payload.source_url or title).encode('utf-8')).hexdigest()[:12]}",
+        source=source,
+        company=company,
+        title=title,
+        location=location,
+        language=language or infer_vacancy_language(
+            " ".join([title, description_raw, requirements, responsibilities])
         ),
         source_url=payload.source_url,
-        description_raw=payload.description_raw,
-        requirements=payload.requirements,
-        responsibilities=payload.responsibilities,
+        description_raw=description_raw,
+        requirements=requirements,
+        responsibilities=responsibilities,
         vacancy_keywords=vacancy_keywords,
         top_match_keywords=vacancy_keywords,
     )

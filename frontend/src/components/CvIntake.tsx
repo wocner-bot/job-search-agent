@@ -1,31 +1,6 @@
 import { FileText, Sparkles, Upload } from "lucide-react";
 import type { VacancyDraft } from "../types";
 
-const sourcePresets = [
-  "LinkedIn",
-  "HH.ru https://hh.ru/",
-  "Telegram @wantapply_design",
-  "Telegram @young_relocate",
-  "Telegram @vdhl_good",
-  "Telegram @moskovskayarabota",
-  "Telegram @professionalsjob",
-  "Telegram @naudalenkebro",
-  "Telegram @zapwork",
-  "Company ATS",
-  "Greenhouse",
-  "Lever",
-  "Ashby",
-  "Workable",
-  "Wellfound",
-  "Y Combinator Work at a Startup",
-  "Welcome to the Jungle",
-  "Otta",
-  "Habr Career",
-  "Indeed",
-  "Glassdoor",
-  "Manual"
-];
-
 type CvIntakeProps = {
   cvText: string;
   cvFileName: string;
@@ -86,65 +61,14 @@ export function CvIntake({
       <div className="vacancy-source-form">
         <div className="match-copy">
           <h2>Добавить реальную вакансию</h2>
-          <p>Вставьте исходник вакансии: ссылка, описание, требования и responsibilities. CV будет адаптирован под эту конкретную строку.</p>
+          <p>Вставьте ссылку на вакансию. Название, компания, регион, язык и исходный текст будут заполнены автоматически.</p>
         </div>
         <div className="form-grid">
-          <label>
-            Источник
-            <select value={vacancyDraft.source} onChange={(event) => updateVacancyDraft("source", event.target.value)}>
-              <option value="">Выберите источник</option>
-              {sourcePresets.map((source) => (
-                <option key={source}>{source}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Компания
-            <input value={vacancyDraft.company} onChange={(event) => updateVacancyDraft("company", event.target.value)} placeholder="Rivian" />
-          </label>
-          <label>
-            Название вакансии
-            <input
-              value={vacancyDraft.title}
-              onChange={(event) => updateVacancyDraft("title", event.target.value)}
-              placeholder="Sr. Lead Product Designer - Design System Frameworks"
-            />
-          </label>
-          <label>
-            Язык
-            <select value={vacancyDraft.language} onChange={(event) => updateVacancyDraft("language", event.target.value)}>
-              <option value="">Выберите язык</option>
-              <option>English</option>
-              <option>Russian</option>
-              <option>English/Russian</option>
-              <option>Other</option>
-            </select>
-          </label>
-          <label>
-            Локация
-            <input value={vacancyDraft.location} onChange={(event) => updateVacancyDraft("location", event.target.value)} placeholder="Remote / Europe" />
-          </label>
           <label>
             Ссылка на вакансию
             <input value={vacancyDraft.source_url} onChange={(event) => updateVacancyDraft("source_url", event.target.value)} placeholder="https://..." />
           </label>
         </div>
-        <label className="field-block">
-          <span>Исходник вакансии</span>
-          <textarea
-            value={vacancyDraft.description_raw}
-            onChange={(event) => updateVacancyDraft("description_raw", event.target.value)}
-            placeholder="Вставьте полный текст вакансии"
-          />
-        </label>
-        <label className="field-block">
-          <span>Requirements</span>
-          <textarea value={vacancyDraft.requirements} onChange={(event) => updateVacancyDraft("requirements", event.target.value)} />
-        </label>
-        <label className="field-block">
-          <span>Responsibilities</span>
-          <textarea value={vacancyDraft.responsibilities} onChange={(event) => updateVacancyDraft("responsibilities", event.target.value)} />
-        </label>
         <button className="primary-action secondary-action" type="button" onClick={onAddVacancy} disabled={isAddingVacancy}>
           {isAddingVacancy ? "Добавляю..." : "Добавить вакансию и CV"}
         </button>

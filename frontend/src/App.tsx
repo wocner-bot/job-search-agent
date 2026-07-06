@@ -82,25 +82,22 @@ export default function App() {
   }
 
   async function addVacancy() {
-    if (!vacancyDraft.title.trim() || !vacancyDraft.company.trim()) {
-      setMessage("Добавьте компанию и название вакансии.");
-      return;
-    }
-    if (!vacancyDraft.description_raw.trim() && !vacancyDraft.requirements.trim() && !vacancyDraft.source_url.trim()) {
-      setMessage("Добавьте ссылку, описание или требования вакансии.");
+    if (!vacancyDraft.source_url.trim()) {
+      setMessage("Добавьте ссылку на вакансию.");
       return;
     }
     setIsAddingVacancy(true);
-    setMessage("Добавляю вакансию и готовлю CV под неё...");
+    setMessage("Читаю вакансию по ссылке и готовлю CV под неё...");
     try {
       await api.createVacancy({
-        ...vacancyDraft,
+        ...emptyVacancyDraft,
+        source_url: vacancyDraft.source_url,
         external_id: vacancyDraft.external_id || `MAN-${Date.now()}`
       });
       await api.runAnalysis();
       await refresh();
       setVacancyDraft(emptyVacancyDraft);
-      setMessage("Вакансия добавлена: исходник сохранён, tailored CV привязан в таблице.");
+      setMessage("Вакансия добавлена: данные заполнены из ссылки, tailored CV привязан в таблице.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Не удалось добавить вакансию.");
     } finally {
