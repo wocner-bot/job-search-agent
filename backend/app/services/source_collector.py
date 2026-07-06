@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import html
+import http.cookiejar
 import json
 import re
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from typing import Callable
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.request import HTTPCookieProcessor, Request, build_opener, urlopen
 
 from app.models import CandidateProfile, Vacancy
 from app.services.recruiter import RoleRecommendation
@@ -80,7 +81,7 @@ def collect_live_vacancies(
     for role in roles[:8]:
         for vacancy in _collect_linkedin_vacancies(role, fetch_text, per_role_limit):
             _append_unique(candidates, seen, vacancy)
-        for vacancy in _collect_hh_vacancies(role, fetch_json, date_from, per_role_limit):
+        for vacancy in _collect_hh_vacancies(role, fetch_json, fetch_text, date_from, per_role_limit):
             _append_unique(candidates, seen, vacancy)
     for vacancy in _collect_telegram_vacancies(profile, roles, fetch_text, date_from, telegram_channels):
         _append_unique(candidates, seen, vacancy)
@@ -90,6 +91,7 @@ def collect_live_vacancies(
 def _collect_hh_vacancies(
     role: RoleRecommendation,
     fetch_json: JsonFetcher,
+    fetch_text: TextFetcher,
     date_from: date,
     per_role_limit: int,
 ) -> list[Vacancy]:
@@ -103,7 +105,7 @@ def _collect_hh_vacancies(
     try:
         payload = fetch_json(HH_API_URL, params)
     except Exception:
-        return []
+        return _collect_hh_public_page_vacancies(role, fetch_text, date_from, per_role_limit)
 
     rows: list[Vacancy] = []
     for item in payload.get("items", [])[:per_role_limit]:
@@ -142,6 +144,77 @@ def _collect_hh_vacancies(
             )
         )
     return rows
+
+
+def _collect_hh_public_page_vacancies(
+    role: RoleRecommendation,
+    fetch_text: TextFetcher,
+    date_from: date,
+    per_role_limit: int,
+) -> list[Vacancy]:
+    params = urlencode({"text": role.title, "search_period": "7", "order_by": "publication_time"})
+    url = f"https://hh.ru/search/vacancy?{params}"
+    try:
+        page = fetch_text(url)
+    except Exception:
+        try:
+            page = _fetch_hh_text_with_cookies(url)
+        except Exception:
+            return []
+    return _parse_hh_public_cards(page, role, date_from)[:per_role_limit]
+
+
+def _parse_hh_public_cards(page: str, role: RoleRecommendation, date_from: date) -> list[Vacancy]:
+    rows: list[Vacancy] = []
+    seen_urls: set[str] = set()
+    for index, raw_card in enumerate(_hh_vacancy_snippets(page), start=1):
+        source_url = _clean_hh_url(_extract_first_match(raw_card, r'href="([^"]*hh\.ru/vacancy/\d+[^"]*)"'))
+        if not source_url:
+            continue
+        if source_url in seen_urls:
+            continue
+        seen_urls.add(source_url)
+        title = _clean_text(_extract_first_match(raw_card, r'<a[^>]+href="[^"]*hh\.ru/vacancy/\d+[^"]*"[^>]*>([\s\S]*?)</a>')) or role.title
+        company = (
+            _clean_text(_extract_first_match(raw_card, r'data-qa="vacancy-serp__vacancy-employer"[^>]*>([\s\S]*?)</a>'))
+            or _clean_text(_extract_first_match(raw_card, r'data-qa="vacancy-serp__vacancy-employer-text"[^>]*>([\s\S]*?)</span>'))
+            or "HH.ru employer"
+        )
+        location = _clean_text(_extract_first_match(raw_card, r'data-qa="vacancy-serp__vacancy-address"[^>]*>([\s\S]*?)</span>'))
+        description = " ".join(part for part in [title, company, location] if part)
+        rows.append(
+            Vacancy(
+                external_id=f"HH-{_hh_id(source_url) or index}",
+                source=HH_SOURCE,
+                company=company,
+                title=title,
+                location=location,
+                posted="",
+                date_status=f"verified within 7 days from HH public search since {date_from.isoformat()}",
+                language=infer_vacancy_language(description),
+                fit_score=role.fit_score,
+                priority=role.priority,
+                submit_status=ApplicationStatus.DRAFT,
+                next_action="Open HH.ru vacancy, verify status, then send tailored CV manually.",
+                source_url=source_url,
+                description_raw=description,
+                vacancy_keywords=extract_vacancy_keywords(title, description),
+                tailored_headline=role.headline,
+                top_match_keywords="; ".join(role.keywords),
+                gaps_risks="Verify HH.ru vacancy status, location, and application route before sending.",
+                adaptation_strategy=role.strategy,
+            )
+        )
+    return rows
+
+
+def _hh_vacancy_snippets(page: str) -> list[str]:
+    snippets: list[str] = []
+    for match in re.finditer(r'<a[^>]+href="[^"]*hh\.ru/vacancy/\d+[^"]*"[\s\S]*?</a>', page, flags=re.IGNORECASE):
+        start = max(0, match.start() - 2400)
+        end = min(len(page), match.end() + 2400)
+        snippets.append(page[start:end])
+    return snippets
 
 
 def _collect_linkedin_vacancies(role: RoleRecommendation, fetch_text: TextFetcher, per_role_limit: int) -> list[Vacancy]:
@@ -396,9 +469,31 @@ def _fetch_json(url: str, params: dict[str, str]) -> dict:
 
 
 def _fetch_text(url: str) -> str:
-    request = Request(url, headers={"User-Agent": "job-search-agent/0.1"})
+    request = Request(
+        url,
+        headers=_browser_headers(),
+    )
     with urlopen(request, timeout=12) as response:
         return response.read().decode("utf-8", errors="replace")
+
+
+def _fetch_hh_text_with_cookies(url: str) -> str:
+    cookie_jar = http.cookiejar.CookieJar()
+    opener = build_opener(HTTPCookieProcessor(cookie_jar))
+    opener.open(Request("https://hh.ru/", headers=_browser_headers()), timeout=12).read()
+    with opener.open(Request(url, headers=_browser_headers()), timeout=12) as response:
+        return response.read().decode("utf-8", errors="replace")
+
+
+def _browser_headers() -> dict[str, str]:
+    return {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+        "User-Agent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+        ),
+    }
 
 
 def _clean_text(value: str) -> str:
@@ -434,6 +529,21 @@ def _clean_linkedin_url(value: str) -> str:
 
 def _linkedin_id(value: str) -> str:
     match = re.search(r"/jobs/view/(\d+)", value)
+    return match.group(1) if match else ""
+
+
+def _clean_hh_url(value: str) -> str:
+    if not value:
+        return ""
+    value = html.unescape(value)
+    if value.startswith("/vacancy/"):
+        value = f"https://hh.ru{value}"
+    match = re.search(r"(https://hh\.ru/vacancy/\d+)", value)
+    return match.group(1) if match else ""
+
+
+def _hh_id(value: str) -> str:
+    match = re.search(r"/vacancy/(\d+)", value)
     return match.group(1) if match else ""
 
 
