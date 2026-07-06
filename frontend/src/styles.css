@@ -367,17 +367,21 @@ button:hover,
   gap: var(--space-section);
 }
 
+.queue-layout > .panel {
+  overflow-x: auto;
+}
+
 .queue-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
-  min-width: 1260px;
+  min-width: 1680px;
 }
 
 .queue-table .source-text {
   color: var(--muted);
-  min-width: 180px;
-  max-width: 280px;
+  min-width: 240px;
+  max-width: 360px;
   overflow-wrap: anywhere;
 }
 
@@ -385,7 +389,7 @@ button:hover,
 .queue-table td {
   text-align: left;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 10px;
+  padding: 14px 16px;
 }
 
 .queue-table th {
