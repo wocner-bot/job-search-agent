@@ -10,6 +10,12 @@ import { matchesRegion, workModeForVacancy } from "../vacancyFilters.ts";
 const html = renderToStaticMarkup(<App />);
 
 assert.match(html, /Job Search Agent/);
+assert.doesNotMatch(html, /href="#cv"/);
+assert.doesNotMatch(html, /href="#package"/);
+assert.doesNotMatch(html, /href="#exports"/);
+assert.doesNotMatch(html, /CV Intake/);
+assert.doesNotMatch(html, /Ready-to-Send/);
+assert.doesNotMatch(html, /Exports/);
 assert.match(html, /Подбор вакансий по CV/);
 assert.match(html, /Вставьте CV текстом/);
 assert.doesNotMatch(html, /Файл с вакансиями/);
