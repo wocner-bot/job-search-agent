@@ -4,6 +4,8 @@ import App from "../App.tsx";
 import { apiUrl } from "../api.ts";
 import { CvIntake } from "../components/CvIntake.tsx";
 import { GlobalPreloader } from "../components/GlobalPreloader.tsx";
+import type { Vacancy } from "../types.ts";
+import { matchesRegion, workModeForVacancy } from "../vacancyFilters.ts";
 
 const html = renderToStaticMarkup(<App />);
 
@@ -16,6 +18,12 @@ assert.match(html, /Подобрать вакансии/);
 assert.match(html, /upload-actions/);
 assert.match(html, /Vacancy Link/);
 assert.match(html, /Source Text/);
+assert.match(html, /Work mode/);
+assert.match(html, /Region/);
+assert.match(html, /All work modes/);
+assert.match(html, /Remote/);
+assert.match(html, /Office/);
+assert.match(html, /Hybrid/);
 assert.match(html, /Tailored CV/);
 assert.match(html, /Master CV Template/);
 assert.doesNotMatch(html, /Добавить реальную вакансию/);
@@ -49,5 +57,20 @@ assert.equal(
   "https://job-search-agent-api-v7n6.onrender.com/api/vacancies/21/tailored-cv.docx"
 );
 assert.equal(apiUrl("https://example.com/job"), "https://example.com/job");
+
+const vacancy = (location: string, description = "") =>
+  ({
+    location,
+    description_raw: description,
+    title: "Product Designer",
+    requirements: "",
+    responsibilities: ""
+  }) as Vacancy;
+
+assert.equal(workModeForVacancy(vacancy("Remote / Europe")), "Remote");
+assert.equal(workModeForVacancy(vacancy("Москва", "гибридный формат")), "Hybrid");
+assert.equal(workModeForVacancy(vacancy("Berlin")), "Office");
+assert.equal(matchesRegion(vacancy("Remote / Europe"), "europe"), true);
+assert.equal(matchesRegion(vacancy("Remote / Europe"), "moscow"), false);
 
 console.log("App smoke test passed");

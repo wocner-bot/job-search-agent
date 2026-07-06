@@ -9,6 +9,7 @@ import { type Filters, VacancyFilters } from "./components/VacancyFilters.tsx";
 import { VacancyDetail } from "./components/VacancyDetail.tsx";
 import { VacancyTable } from "./components/VacancyTable.tsx";
 import type { ApplicationMaterial, ApplicationStatus, Vacancy } from "./types.ts";
+import { matchesRegion, workModeForVacancy } from "./vacancyFilters.ts";
 
 export default function App() {
   const [cvText, setCvText] = useState("");
@@ -17,7 +18,7 @@ export default function App() {
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [materials, setMaterials] = useState<ApplicationMaterial[]>([]);
   const [selected, setSelected] = useState<Vacancy | undefined>();
-  const [filters, setFilters] = useState<Filters>({ priority: "", source: "", language: "" });
+  const [filters, setFilters] = useState<Filters>({ priority: "", source: "", language: "", workMode: "", region: "" });
   const [message, setMessage] = useState("");
 
   async function refresh() {
@@ -32,6 +33,8 @@ export default function App() {
       vacancies.filter((vacancy) => {
         return (
           (!filters.priority || vacancy.priority === filters.priority) &&
+          (!filters.workMode || workModeForVacancy(vacancy) === filters.workMode) &&
+          matchesRegion(vacancy, filters.region) &&
           (!filters.source || vacancy.source.toLowerCase().includes(filters.source.toLowerCase())) &&
           (!filters.language || vacancy.language.toLowerCase().includes(filters.language.toLowerCase()))
         );

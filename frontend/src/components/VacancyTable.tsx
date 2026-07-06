@@ -1,5 +1,6 @@
 import { apiUrl } from "../api.ts";
 import type { Vacancy } from "../types";
+import { workModeForVacancy } from "../vacancyFilters.ts";
 
 function sourceTextPreview(vacancy: Vacancy): string {
   const sourceText = vacancy.description_raw || vacancy.requirements || vacancy.responsibilities || vacancy.source_url;
@@ -16,6 +17,8 @@ export function VacancyTable({ vacancies, selectedId, onSelect }: { vacancies: V
           <th>Source</th>
           <th>Vacancy Link</th>
           <th>Source Text</th>
+          <th>Work mode</th>
+          <th>Region</th>
           <th>Company</th>
           <th>Vacancy</th>
           <th>Fit</th>
@@ -41,6 +44,8 @@ export function VacancyTable({ vacancies, selectedId, onSelect }: { vacancies: V
             <td className="source-text" title={vacancy.description_raw || vacancy.requirements || vacancy.responsibilities || vacancy.source_url}>
               {sourceTextPreview(vacancy)}
             </td>
+            <td>{workModeForVacancy(vacancy)}</td>
+            <td>{vacancy.location || ""}</td>
             <td>{vacancy.company}</td>
             <td>{vacancy.title}</td>
             <td>{vacancy.fit_score}</td>

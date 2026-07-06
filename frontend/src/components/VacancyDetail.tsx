@@ -1,5 +1,6 @@
 import { apiUrl } from "../api.ts";
 import type { ApplicationMaterial, ApplicationStatus, Vacancy } from "../types";
+import { workModeForVacancy } from "../vacancyFilters.ts";
 
 const statuses: ApplicationStatus[] = ["Draft", "Ready to send", "Sent", "Follow-up", "Rejected", "Archived"];
 
@@ -28,6 +29,10 @@ export function VacancyDetail({
       <dl>
         <dt>Source</dt>
         <dd>{vacancy.source}</dd>
+        <dt>Work mode</dt>
+        <dd>{workModeForVacancy(vacancy)}</dd>
+        <dt>Region</dt>
+        <dd>{vacancy.location || "No region saved yet."}</dd>
         <dt>Vacancy keywords</dt>
         <dd>{vacancy.vacancy_keywords}</dd>
         <dt>Headline</dt>
