@@ -204,12 +204,12 @@ select:focus {
 
 .primary-action {
   justify-content: center;
-  background: var(--accent);
+  background: linear-gradient(135deg, #ecff4d 0%, #c9dc28 44%, #46bd75 100%);
   color: #172014;
-  border-color: rgba(236, 255, 77, 0.34);
+  border-color: rgba(236, 255, 77, 0.54);
   min-height: 44px;
   font-weight: 700;
-  box-shadow: 0 14px 30px rgba(201, 220, 40, 0.18);
+  box-shadow: 0 16px 34px rgba(201, 220, 40, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 .primary-action:disabled {
@@ -218,7 +218,7 @@ select:focus {
 }
 
 .primary-action:hover {
-  background: #d8ec32;
+  background: linear-gradient(135deg, #f2ff73 0%, #d8ec32 42%, #59d48a 100%);
   border-color: rgba(236, 255, 77, 0.58);
   color: #172014;
 }

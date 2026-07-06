@@ -32,6 +32,8 @@ assert.match(html, /Вставьте CV текстом/);
 assert.doesNotMatch(html, /Файл с вакансиями/);
 assert.match(html, /20 должностей/);
 assert.match(html, /Подобрать вакансии/);
+assert.match(html, /lucide-wand-sparkles/);
+assert.match(styles, /\.primary-action\s*\{[^}]*linear-gradient/s);
 assert.match(html, /upload-actions/);
 assert.match(html, /Vacancy Link/);
 assert.match(html, /Source Text/);

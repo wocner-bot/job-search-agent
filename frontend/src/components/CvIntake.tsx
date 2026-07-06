@@ -1,4 +1,4 @@
-import { FileText, Sparkles, Upload } from "lucide-react";
+import { FileText, Upload, WandSparkles } from "lucide-react";
 
 type CvIntakeProps = {
   cvText: string;
@@ -42,7 +42,7 @@ export function CvIntake({
           <strong>{cvFileName || "PDF, DOCX или TXT"}</strong>
         </label>
         <button className="primary-action match-button" type="button" onClick={onMatch} disabled={isMatching}>
-          <Sparkles size={18} aria-hidden="true" /> {isMatching ? "Подбираю..." : "Подобрать вакансии"}
+          <WandSparkles size={18} aria-hidden="true" /> {isMatching ? "Подбираю..." : "Подобрать вакансии"}
         </button>
       </div>
     </section>
