@@ -5,10 +5,10 @@ export function ExportBar() {
   return (
     <section id="exports" className="panel compact">
       <a className="button-link" href={apiUrl("/api/candidate/master-cv.docx")}>
-        <Download size={16} aria-hidden="true" /> Master CV Template
+        <Download size={16} aria-hidden="true" /> Мастер-шаблон CV
       </a>
       <a className="button-link" href={apiUrl("/api/exports/zip")}>
-        <Download size={16} aria-hidden="true" /> Export ZIP Package
+        <Download size={16} aria-hidden="true" /> Скачать ZIP-пакет
       </a>
     </section>
   );

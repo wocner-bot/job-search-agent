@@ -84,8 +84,8 @@ export default function App() {
       {isProcessing && <GlobalPreloader label="Обрабатываю данные..." />}
       <header className="workspace-header">
         <div>
-          <h1>Job Search Agent</h1>
-          <p>CV-first workspace for matching vacancies and preparing ready-to-send materials.</p>
+          <h1>Агент поиска работы</h1>
+          <p>Рабочее пространство для подбора вакансий по CV и подготовки материалов к отправке.</p>
         </div>
       </header>
       {message && <div className="notice">{message}</div>}
@@ -101,7 +101,7 @@ export default function App() {
       <section id="queue" className="queue-layout">
         <div className="panel">
           <div className="panel-header">
-            <h2>Vacancy Queue</h2>
+            <h2>Очередь вакансий</h2>
             <VacancyFilters filters={filters} onChange={setFilters} />
           </div>
           <VacancyTable vacancies={visibleVacancies} selectedId={selected?.id} onSelect={setSelected} />

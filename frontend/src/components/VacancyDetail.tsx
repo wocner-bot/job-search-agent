@@ -1,4 +1,5 @@
 import { apiUrl } from "../api.ts";
+import { applicationStatusLabel, workModeLabel } from "../labels.ts";
 import type { ApplicationMaterial, ApplicationStatus, Vacancy } from "../types";
 import { workModeForVacancy } from "../vacancyFilters.ts";
 
@@ -14,47 +15,47 @@ export function VacancyDetail({
   onStatusChange: (status: ApplicationStatus) => void;
 }) {
   if (!vacancy) {
-    return <aside className="detail-panel">Select a vacancy to review ready-to-send materials.</aside>;
+    return <aside className="detail-panel">Выберите вакансию, чтобы посмотреть материалы для отправки.</aside>;
   }
   return (
     <aside className="detail-panel">
       <h2>{vacancy.company}</h2>
       <p className="muted">{vacancy.title}</p>
       <label>
-        Status
+        Статус
         <select value={vacancy.submit_status} onChange={(event) => onStatusChange(event.target.value as ApplicationStatus)}>
-          {statuses.map((status) => <option key={status}>{status}</option>)}
+          {statuses.map((status) => <option key={status} value={status}>{applicationStatusLabel(status)}</option>)}
         </select>
       </label>
       <dl>
-        <dt>Source</dt>
+        <dt>Источник</dt>
         <dd>{vacancy.source}</dd>
-        <dt>Work mode</dt>
-        <dd>{workModeForVacancy(vacancy)}</dd>
-        <dt>Region</dt>
-        <dd>{vacancy.location || "No region saved yet."}</dd>
-        <dt>Vacancy keywords</dt>
+        <dt>Формат работы</dt>
+        <dd>{workModeLabel(workModeForVacancy(vacancy))}</dd>
+        <dt>Регион</dt>
+        <dd>{vacancy.location || "Регион пока не сохранён."}</dd>
+        <dt>Ключевые слова вакансии</dt>
         <dd>{vacancy.vacancy_keywords}</dd>
-        <dt>Headline</dt>
+        <dt>Заголовок CV</dt>
         <dd>{vacancy.tailored_headline}</dd>
-        <dt>Keywords</dt>
+        <dt>Ключевые слова</dt>
         <dd>{vacancy.top_match_keywords}</dd>
-        <dt>Risks</dt>
+        <dt>Риски</dt>
         <dd>{vacancy.gaps_risks}</dd>
-        <dt>Strategy</dt>
+        <dt>Стратегия</dt>
         <dd>{vacancy.adaptation_strategy}</dd>
-        <dt>Vacancy source text</dt>
-        <dd>{vacancy.description_raw || "No source text saved yet."}</dd>
-        <dt>Requirements</dt>
-        <dd>{vacancy.requirements || "No requirements saved yet."}</dd>
-        <dt>Responsibilities</dt>
-        <dd>{vacancy.responsibilities || "No responsibilities saved yet."}</dd>
+        <dt>Исходный текст вакансии</dt>
+        <dd>{vacancy.description_raw || "Исходный текст пока не сохранён."}</dd>
+        <dt>Требования</dt>
+        <dd>{vacancy.requirements || "Требования пока не сохранены."}</dd>
+        <dt>Обязанности</dt>
+        <dd>{vacancy.responsibilities || "Обязанности пока не сохранены."}</dd>
       </dl>
-      {vacancy.source_url && <a href={vacancy.source_url} target="_blank" rel="noreferrer">Open vacancy</a>}
-      {vacancy.cv_file_path && <a href={apiUrl(vacancy.cv_file_path)} target="_blank" rel="noreferrer">Open tailored CV</a>}
+      {vacancy.source_url && <a href={vacancy.source_url} target="_blank" rel="noreferrer">Открыть вакансию</a>}
+      {vacancy.cv_file_path && <a href={apiUrl(vacancy.cv_file_path)} target="_blank" rel="noreferrer">Открыть адаптированное CV</a>}
       {material && (
         <div className="messages">
-          <h3>Ready-to-send</h3>
+          <h3>Материалы для отправки</h3>
           <textarea readOnly value={material.short_note} />
           <textarea readOnly value={material.recruiter_dm} />
           <textarea readOnly value={material.email_cover_letter} />

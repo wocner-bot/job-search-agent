@@ -193,25 +193,40 @@ select:focus {
   background: rgba(245, 250, 246, 0.1);
 }
 
-.upload-box input {
-  max-width: 100%;
+.file-picker-input {
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
 }
 
-.upload-box input::file-selector-button {
+.file-picker-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-field);
+}
+
+.file-picker-button {
   background: #050708;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 6px;
   color: var(--text);
   cursor: pointer;
+  display: inline-flex;
   font-weight: 700;
-  margin-right: var(--space-field);
   min-height: 36px;
   padding: 8px 12px;
 }
 
-.upload-box input::file-selector-button:hover {
+.file-picker-button:hover {
   background: #111719;
   border-color: rgba(255, 255, 255, 0.3);
+}
+
+.file-picker-name {
+  color: var(--text);
 }
 
 .upload-box strong {

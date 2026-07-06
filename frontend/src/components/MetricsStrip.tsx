@@ -6,10 +6,10 @@ export function MetricsStrip({ vacancies }: { vacancies: Vacancy[] }) {
   const sent = vacancies.filter((vacancy) => vacancy.submit_status === "Sent").length;
   return (
     <section className="metrics">
-      <div><span>Total</span><strong>{vacancies.length}</strong></div>
-      <div><span>Very High</span><strong>{veryHigh}</strong></div>
-      <div><span>Ready</span><strong>{ready}</strong></div>
-      <div><span>Sent</span><strong>{sent}</strong></div>
+      <div><span>Всего</span><strong>{vacancies.length}</strong></div>
+      <div><span>Очень высокий</span><strong>{veryHigh}</strong></div>
+      <div><span>Готово</span><strong>{ready}</strong></div>
+      <div><span>Отправлено</span><strong>{sent}</strong></div>
     </section>
   );
 }

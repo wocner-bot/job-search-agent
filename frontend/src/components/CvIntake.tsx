@@ -38,8 +38,12 @@ export function CvIntake({
           <span>
             <Upload size={16} aria-hidden="true" /> CV файлом
           </span>
-          <input type="file" accept=".txt,.pdf,.docx" onChange={(event) => onCvFileChange(event.target.files?.[0] ?? null)} />
-          <strong>{cvFileName || "PDF, DOCX или TXT"}</strong>
+          <span className="file-picker-row">
+            <span className="file-picker-button">Выбрать файл</span>
+            <span className="file-picker-name">{cvFileName || "Файл не выбран"}</span>
+          </span>
+          <input className="file-picker-input" type="file" accept=".txt,.pdf,.docx" onChange={(event) => onCvFileChange(event.target.files?.[0] ?? null)} />
+          <strong>PDF, DOCX или TXT</strong>
         </label>
         <button className="primary-action match-button" type="button" onClick={onMatch} disabled={isMatching}>
           <WandSparkles size={18} aria-hidden="true" /> {isMatching ? "Подбираю..." : "Подобрать вакансии"}
