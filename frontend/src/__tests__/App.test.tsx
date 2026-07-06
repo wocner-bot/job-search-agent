@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import App from "../App.tsx";
 import { apiUrl } from "../api.ts";
@@ -8,8 +9,10 @@ import type { Vacancy } from "../types.ts";
 import { matchesRegion, workModeForVacancy } from "../vacancyFilters.ts";
 
 const html = renderToStaticMarkup(<App />);
+const styles = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
 
 assert.match(html, /Job Search Agent/);
+assert.match(styles, /photo-1598376538586-c244746bfa1e/);
 assert.doesNotMatch(html, /href="#cv"/);
 assert.doesNotMatch(html, /href="#package"/);
 assert.doesNotMatch(html, /href="#exports"/);
