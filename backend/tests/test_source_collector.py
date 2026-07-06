@@ -111,6 +111,52 @@ def test_collect_live_vacancies_reads_hh_public_page_when_api_is_blocked():
     assert "search/" not in vacancies[0].source_url
 
 
+def test_collect_live_vacancies_skips_irrelevant_hh_public_page_rows():
+    profile = CandidateProfile(
+        raw_cv_text="Lead Product Designer Automotive UX HMI Design Systems",
+        target_titles="Lead Product Designer",
+    )
+
+    def blocked_json(_url: str, _params: dict[str, str]) -> dict:
+        raise PermissionError("403")
+
+    def fake_text(url: str) -> str:
+        if "hh.ru/search/vacancy" in url:
+            return """
+            <div class="vacancy-serp-item">
+              <a data-qa="serp-item__title" href="https://hh.ru/vacancy/134738517?from=vacancy_search_list">
+                OPERATIONAL ASSISTANT (ADB)
+              </a>
+              <span data-qa="vacancy-serp__vacancy-employer-text">ADB</span>
+              <span data-qa="vacancy-serp__vacancy-address">Astana</span>
+              Support routine processing requirements, maintain client database and arrange meetings.
+            </div>
+            <div class="vacancy-serp-item">
+              <a data-qa="serp-item__title" href="https://hh.ru/vacancy/555?from=vacancy_search_list">
+                Senior Product Designer Design Systems
+              </a>
+              <span data-qa="vacancy-serp__vacancy-employer-text">Product Studio</span>
+              <span data-qa="vacancy-serp__vacancy-address">Remote</span>
+              Lead UX strategy, Figma components and design systems for product teams.
+            </div>
+            """
+        return ""
+
+    vacancies = collect_live_vacancies(
+        profile,
+        roles=ROLE_RECOMMENDATIONS[:1],
+        fetch_json=blocked_json,
+        fetch_text=fake_text,
+        today=date(2026, 7, 6),
+        telegram_channels=(),
+        per_role_limit=2,
+        max_results=10,
+    )
+
+    assert [vacancy.source_url for vacancy in vacancies] == ["https://hh.ru/vacancy/555"]
+    assert vacancies[0].priority != "Very High"
+
+
 def test_collect_live_vacancies_does_not_add_search_link_placeholders_when_sources_are_blocked():
     profile = CandidateProfile(raw_cv_text="Lead Product Designer", target_titles="Lead Product Designer")
 

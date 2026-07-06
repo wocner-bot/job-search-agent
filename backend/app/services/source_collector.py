@@ -128,8 +128,8 @@ def _collect_hh_vacancies(
                 posted=_format_posted(item.get("published_at")),
                 date_status="verified within 7 days",
                 language=infer_vacancy_language(" ".join([title, description])),
-                fit_score=role.fit_score,
-                priority=role.priority,
+                fit_score=0,
+                priority="Medium",
                 submit_status=ApplicationStatus.DRAFT,
                 next_action="Open source vacancy, verify fit, then send tailored CV manually.",
                 source_url=source_url,
@@ -182,6 +182,8 @@ def _parse_hh_public_cards(page: str, role: RoleRecommendation, date_from: date)
         )
         location = _clean_text(_extract_first_match(raw_card, r'data-qa="vacancy-serp__vacancy-address"[^>]*>([\s\S]*?)</span>'))
         description = " ".join(part for part in [title, company, location] if part)
+        if not _is_relevant_role_card(description, role):
+            continue
         rows.append(
             Vacancy(
                 external_id=f"HH-{_hh_id(source_url) or index}",
@@ -192,8 +194,8 @@ def _parse_hh_public_cards(page: str, role: RoleRecommendation, date_from: date)
                 posted="",
                 date_status=f"verified within 7 days from HH public search since {date_from.isoformat()}",
                 language=infer_vacancy_language(description),
-                fit_score=role.fit_score,
-                priority=role.priority,
+                fit_score=0,
+                priority="Medium",
                 submit_status=ApplicationStatus.DRAFT,
                 next_action="Open HH.ru vacancy, verify status, then send tailored CV manually.",
                 source_url=source_url,
@@ -211,10 +213,20 @@ def _parse_hh_public_cards(page: str, role: RoleRecommendation, date_from: date)
 def _hh_vacancy_snippets(page: str) -> list[str]:
     snippets: list[str] = []
     for match in re.finditer(r'<a[^>]+href="[^"]*hh\.ru/vacancy/\d+[^"]*"[\s\S]*?</a>', page, flags=re.IGNORECASE):
-        start = max(0, match.start() - 2400)
+        start = match.start()
         end = min(len(page), match.end() + 2400)
         snippets.append(page[start:end])
     return snippets
+
+
+def _is_relevant_role_card(text: str, role: RoleRecommendation) -> bool:
+    normalized = text.lower()
+    if role.title.lower() in normalized:
+        return True
+    role_keyword_hits = sum(1 for keyword in role.keywords if keyword.lower() in normalized)
+    if role_keyword_hits >= 2:
+        return True
+    return any(term in normalized for term in DESIGN_SIGNAL_TERMS)
 
 
 def _collect_linkedin_vacancies(role: RoleRecommendation, fetch_text: TextFetcher, per_role_limit: int) -> list[Vacancy]:
@@ -248,8 +260,8 @@ def _parse_linkedin_cards(page: str, role: RoleRecommendation) -> list[Vacancy]:
                 posted=posted,
                 date_status="verified within 7 days",
                 language=infer_vacancy_language(description),
-                fit_score=role.fit_score,
-                priority=role.priority,
+                fit_score=0,
+                priority="Medium",
                 submit_status=ApplicationStatus.DRAFT,
                 next_action="Open LinkedIn vacancy, verify status, then send tailored CV manually.",
                 source_url=source_url,

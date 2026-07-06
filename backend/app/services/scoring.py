@@ -33,10 +33,8 @@ def priority_for_score(score: int) -> str:
 
 
 def score_vacancy(profile: CandidateProfile, vacancy: Vacancy) -> ScoreResult:
-    haystack = " ".join(
+    vacancy_text = " ".join(
         [
-            profile.target_titles,
-            profile.experience_areas,
             vacancy.title,
             vacancy.description_raw,
             vacancy.requirements,
@@ -48,15 +46,17 @@ def score_vacancy(profile: CandidateProfile, vacancy: Vacancy) -> ScoreResult:
         ]
     ).lower()
     matched_categories: list[str] = []
-    raw_score = 55
+    raw_score = 45
     for category, terms in KEYWORDS.items():
-        if any(term in haystack for term in terms):
+        if any(term in vacancy_text for term in terms):
             matched_categories.append(category)
             raw_score += 8
     if "lead" in vacancy.title.lower() or "staff" in vacancy.title.lower():
         raw_score += 5
     if vacancy.language and "english" in vacancy.language.lower() and "English B2" in profile.languages:
         raw_score += 3
+    if not matched_categories:
+        raw_score = min(raw_score, 58)
     score = min(100, max(0, raw_score))
     matched_parts = matched_categories[:]
     if vacancy.vacancy_keywords:
