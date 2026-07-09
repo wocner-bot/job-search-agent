@@ -207,6 +207,53 @@ Automotive UX Voice UX Design Systems Enterprise UX English B2
         assert "2022-2023" not in text
 
 
+def test_candidate_contacts_endpoint_adds_missing_contacts_to_tailored_cv():
+    reset_database()
+    with TestClient(app) as client:
+        candidate = client.post(
+            "/api/candidate/text",
+            json={"text": "Aleksandr Grenkov Lead Product Designer Automotive UX Voice UX Design Systems English B2"},
+        )
+        assert candidate.status_code == 200
+
+        contacts = client.post(
+            "/api/candidate/contacts",
+            json={
+                "email": "aleksandr@example.com",
+                "linkedin": "https://www.linkedin.com/in/aleksandr-grenkov",
+                "portfolio": "https://grenkov.design",
+                "telegram": "@agrenkov",
+            },
+        )
+        assert contacts.status_code == 200
+        assert "aleksandr@example.com" in contacts.json()["raw_cv_text"]
+
+        created_response = client.post(
+            "/api/vacancies",
+            json={
+                "external_id": "PATCH-CONTACTS-1",
+                "source": "LinkedIn",
+                "company": "VehicleCo",
+                "title": "Lead Product Designer",
+                "language": "English",
+                "requirements": "Automotive UX; Voice UX; Design Systems",
+            },
+        )
+        assert created_response.status_code == 200
+        assert client.post("/api/analysis/run").status_code == 200
+
+        vacancy = client.get("/api/vacancies").json()[0]
+        cv_response = client.get(vacancy["cv_file_path"])
+        assert cv_response.status_code == 200
+        document = Document(BytesIO(cv_response.content))
+        text = "\n".join(paragraph.text for paragraph in document.paragraphs)
+
+        assert "aleksandr@example.com" in text
+        assert "linkedin.com/in/aleksandr-grenkov" in text
+        assert "grenkov.design" in text
+        assert "@agrenkov" in text
+
+
 def test_tailored_cv_uses_russian_for_russian_vacancy():
     reset_database()
     with TestClient(app) as client:

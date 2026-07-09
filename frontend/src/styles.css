@@ -188,6 +188,47 @@ select:focus {
   grid-template-rows: auto auto auto 1fr;
 }
 
+.contact-request {
+  border: 1px solid rgba(201, 220, 40, 0.38);
+  border-radius: 8px;
+  display: grid;
+  gap: var(--space-field);
+  padding: var(--space-panel);
+  background: rgba(201, 220, 40, 0.1);
+}
+
+.contact-request h2 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.contact-request p {
+  color: var(--muted);
+  margin: 6px 0 0;
+}
+
+.contact-grid {
+  display: grid;
+  gap: var(--space-field);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.contact-grid label {
+  display: grid;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.contact-grid input {
+  background: rgba(11, 16, 17, 0.34);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  min-height: var(--control-height);
+  padding: 10px var(--space-field);
+  width: 100%;
+}
+
 .upload-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -319,6 +360,10 @@ select:focus {
 
   .cv-submit-box {
     grid-template-rows: auto;
+  }
+
+  .contact-grid {
+    grid-template-columns: 1fr;
   }
 
   .form-grid {

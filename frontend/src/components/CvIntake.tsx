@@ -1,20 +1,29 @@
 import { FileText, Upload, WandSparkles } from "lucide-react";
+import type { ContactDetails, ContactKey } from "../App.tsx";
 
 type CvIntakeProps = {
   cvText: string;
   cvFileName: string;
+  contacts: ContactDetails;
+  showContactFields: boolean;
+  missingContactLabels: string[];
   isMatching: boolean;
   onCvTextChange: (value: string) => void;
   onCvFileChange: (file: File | null) => void;
+  onContactChange: (key: ContactKey, value: string) => void;
   onMatch: () => void;
 };
 
 export function CvIntake({
   cvText,
   cvFileName,
+  contacts,
+  showContactFields,
+  missingContactLabels,
   isMatching,
   onCvTextChange,
   onCvFileChange,
+  onContactChange,
   onMatch
 }: CvIntakeProps) {
   return (
@@ -50,6 +59,51 @@ export function CvIntake({
           </button>
         </div>
       </div>
+      {showContactFields && (
+        <div className="contact-request">
+          <div>
+            <h2>Контакты для CV</h2>
+            <p>Не нашёл в CV: {missingContactLabels.join(", ")}. Заполните поля, чтобы они попали в каждое адаптированное резюме.</p>
+          </div>
+          <div className="contact-grid">
+            <label>
+              <span>Email</span>
+              <input
+                type="email"
+                value={contacts.email}
+                onChange={(event) => onContactChange("email", event.target.value)}
+                placeholder="name@example.com"
+              />
+            </label>
+            <label>
+              <span>LinkedIn</span>
+              <input
+                type="url"
+                value={contacts.linkedin}
+                onChange={(event) => onContactChange("linkedin", event.target.value)}
+                placeholder="https://www.linkedin.com/in/..."
+              />
+            </label>
+            <label>
+              <span>Portfolio</span>
+              <input
+                type="url"
+                value={contacts.portfolio}
+                onChange={(event) => onContactChange("portfolio", event.target.value)}
+                placeholder="https://..."
+              />
+            </label>
+            <label>
+              <span>Telegram</span>
+              <input
+                value={contacts.telegram}
+                onChange={(event) => onContactChange("telegram", event.target.value)}
+                placeholder="@username"
+              />
+            </label>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

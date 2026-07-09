@@ -61,6 +61,37 @@ async def upload_candidate_cv(file: UploadFile = File(...), session: Session = D
     return profile
 
 
+@router.post("/candidate/contacts")
+def update_candidate_contacts(payload: dict[str, str], session: Session = Depends(get_session)) -> CandidateProfile:
+    profile = session.exec(select(CandidateProfile).order_by(CandidateProfile.id.desc())).first()
+    if not profile:
+        raise HTTPException(status_code=400, detail="Create a candidate profile first")
+    contact_block = _candidate_contact_block(payload)
+    if not contact_block:
+        raise HTTPException(status_code=400, detail="At least one contact field is required")
+    base_text = re.sub(r"\nContact details:\n(?:.+\n?){1,6}$", "", profile.raw_cv_text.strip(), flags=re.IGNORECASE)
+    profile.raw_cv_text = f"{base_text}\n\n{contact_block}".strip()
+    session.add(profile)
+    session.commit()
+    session.refresh(profile)
+    return profile
+
+
+def _candidate_contact_block(payload: dict[str, str]) -> str:
+    labels = {
+        "email": "Email",
+        "linkedin": "LinkedIn",
+        "portfolio": "Portfolio",
+        "telegram": "Telegram",
+    }
+    lines = []
+    for key, label in labels.items():
+        value = payload.get(key, "").strip()
+        if value:
+            lines.append(f"{label}: {value}")
+    return "\n".join(["Contact details:", *lines]) if lines else ""
+
+
 @router.get("/vacancies")
 def list_vacancies(session: Session = Depends(get_session)) -> list[Vacancy]:
     return list(session.exec(select(Vacancy).order_by(Vacancy.rank, Vacancy.id)).all())

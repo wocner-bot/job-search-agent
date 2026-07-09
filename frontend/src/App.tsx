@@ -11,9 +11,27 @@ import { VacancyTable } from "./components/VacancyTable.tsx";
 import type { ApplicationMaterial, ApplicationStatus, Vacancy } from "./types.ts";
 import { matchesRegion, workModeForVacancy } from "./vacancyFilters.ts";
 
+export type ContactKey = "email" | "linkedin" | "portfolio" | "telegram";
+export type ContactDetails = Record<ContactKey, string>;
+
+const EMPTY_CONTACTS: ContactDetails = {
+  email: "",
+  linkedin: "",
+  portfolio: "",
+  telegram: ""
+};
+
+const CONTACT_LABELS: Record<ContactKey, string> = {
+  email: "Email",
+  linkedin: "LinkedIn",
+  portfolio: "Portfolio",
+  telegram: "Telegram"
+};
+
 export default function App() {
   const [cvText, setCvText] = useState("");
   const [cvFile, setCvFile] = useState<File | null>(null);
+  const [contacts, setContacts] = useState<ContactDetails>(EMPTY_CONTACTS);
   const [isMatching, setIsMatching] = useState(false);
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [materials, setMaterials] = useState<ApplicationMaterial[]>([]);
@@ -42,9 +60,18 @@ export default function App() {
     [filters, vacancies]
   );
 
+  const missingContactKeys = missingCvContactKeys(cvText, Boolean(cvFile));
+  const showContactFields = (Boolean(cvText.trim()) || Boolean(cvFile)) && missingContactKeys.length > 0;
+  const missingContactLabels = missingContactKeys.map((key) => CONTACT_LABELS[key]);
+
   async function matchVacancies() {
     if (!cvText.trim() && !cvFile) {
       setMessage("Добавьте CV текстом или файлом.");
+      return;
+    }
+    const missingInputs = missingRequiredContactInputs(cvText, Boolean(cvFile), contacts);
+    if (missingInputs.length > 0) {
+      setMessage(`Добавьте контакты для CV: ${missingInputs.map((key) => CONTACT_LABELS[key]).join(", ")}.`);
       return;
     }
     setIsMatching(true);
@@ -52,8 +79,11 @@ export default function App() {
     try {
       if (cvFile) {
         await api.uploadCandidateCv(cvFile);
+        if (hasEnteredContacts(contacts)) {
+          await api.updateCandidateContacts(contacts);
+        }
       } else {
-        await api.createCandidateFromText(cvText);
+        await api.createCandidateFromText(candidateTextWithContacts(cvText, contacts));
       }
       const analyzed = await api.collectMatchesFromSources();
       await refresh();
@@ -95,6 +125,10 @@ export default function App() {
         isMatching={isMatching}
         onCvTextChange={setCvText}
         onCvFileChange={setCvFile}
+        contacts={contacts}
+        showContactFields={showContactFields}
+        missingContactLabels={missingContactLabels}
+        onContactChange={(key, value) => setContacts((current) => ({ ...current, [key]: value }))}
         onMatch={matchVacancies}
       />
       <MetricsStrip vacancies={vacancies} />
@@ -111,4 +145,33 @@ export default function App() {
       <ExportBar />
     </Layout>
   );
+}
+
+export function missingCvContactKeys(cvText: string, hasCvFile: boolean): ContactKey[] {
+  if (!cvText.trim() && !hasCvFile) return [];
+  const text = cvText.toLowerCase();
+  return (Object.keys(CONTACT_LABELS) as ContactKey[]).filter((key) => {
+    if (hasCvFile && !cvText.trim()) return true;
+    if (key === "email") return !/[\w.+-]+@[\w.-]+\.[a-z]{2,}/i.test(cvText);
+    if (key === "linkedin") return !text.includes("linkedin.com/");
+    if (key === "portfolio") return !/https?:\/\/(?![^/]*linkedin\.com)(?![^/]*t\.me)(?![^/]*hh\.ru)[^\s,)>\]]+/i.test(cvText);
+    return !/(^|[\s:])@[a-z0-9_]{4,}\b/i.test(cvText) && !text.includes("t.me/");
+  });
+}
+
+export function missingRequiredContactInputs(cvText: string, hasCvFile: boolean, contacts: ContactDetails): ContactKey[] {
+  return missingCvContactKeys(cvText, hasCvFile).filter((key) => !contacts[key].trim());
+}
+
+export function candidateTextWithContacts(cvText: string, contacts: ContactDetails): string {
+  if (!hasEnteredContacts(contacts)) return cvText;
+  const lines = (Object.keys(CONTACT_LABELS) as ContactKey[])
+    .map((key) => [CONTACT_LABELS[key], contacts[key].trim()])
+    .filter(([, value]) => value)
+    .map(([label, value]) => `${label}: ${value}`);
+  return `${cvText.trim()}\n\nContact details:\n${lines.join("\n")}`.trim();
+}
+
+function hasEnteredContacts(contacts: ContactDetails): boolean {
+  return Object.values(contacts).some((value) => value.trim());
 }

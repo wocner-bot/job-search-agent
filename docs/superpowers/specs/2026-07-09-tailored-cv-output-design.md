@@ -8,6 +8,8 @@ Each vacancy-specific DOCX must read like a finished human CV, not an agent work
 
 - Use the candidate name parsed from the uploaded or pasted CV in the document header.
 - Add a contact line under the headline with Email, LinkedIn, Portfolio, Telegram, and the phrase `Open to international and remote opportunities.`
+- If the CV text does not contain Email, LinkedIn, Portfolio, or Telegram, the UI must request the missing contacts before starting vacancy matching.
+- For uploaded `.pdf` or `.docx` files, the UI must provide the same contact fields and the backend must append submitted contacts to the latest candidate profile.
 - Keep the CV language aligned with the vacancy text language.
 - Render `CORE EXPERTISE` / `КЛЮЧЕВАЯ ЭКСПЕРТИЗА` as ATS-readable tags separated by bullets, not as a bullet list.
 - Prioritize vacancy-specific skills and keywords from requirements, responsibilities, source description, and match keywords.

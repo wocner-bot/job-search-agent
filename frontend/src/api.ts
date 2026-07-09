@@ -52,6 +52,8 @@ export const api = {
   importCurrentPackage: () => request<{ imported: number }>("/api/imports/current-package", { method: "POST" }),
   createCandidateFromText: (text: string) => request("/api/candidate/text", { method: "POST", body: JSON.stringify({ text }) }),
   uploadCandidateCv: (file: File) => upload("/api/candidate/upload", file),
+  updateCandidateContacts: (contacts: Record<string, string>) =>
+    request("/api/candidate/contacts", { method: "POST", body: JSON.stringify(contacts) }),
   uploadVacancyFile: (file: File) => upload<{ imported: number }>("/api/imports/vacancies/upload", file),
   generateMatchesFromCv: () => request<{ generated: number; analyzed: number }>("/api/analysis/from-cv", { method: "POST" }),
   collectMatchesFromSources: () =>

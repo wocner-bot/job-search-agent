@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
-import App from "../App.tsx";
+import App, { candidateTextWithContacts, missingRequiredContactInputs, type ContactDetails } from "../App.tsx";
 import { apiUrl } from "../api.ts";
 import { CvIntake } from "../components/CvIntake.tsx";
 import { GlobalPreloader } from "../components/GlobalPreloader.tsx";
@@ -54,11 +54,14 @@ assert.match(styles, /\.file-picker-button\s*\{[^}]*background: #050708;/s);
 assert.match(html, /cv-input-grid/);
 assert.match(html, /cv-field-box/);
 assert.match(html, /cv-submit-box/);
+assert.doesNotMatch(html, /Контакты для CV/);
 assert.doesNotMatch(html, /upload-actions/);
 assert.match(styles, /\.cv-input-grid\s*\{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/s);
 assert.match(styles, /\.cv-field-box,\s*\.upload-box\s*\{[^}]*border: 1px solid var\(--line\);/s);
 assert.match(styles, /\.cv-text-block\s*\{[^}]*grid-template-rows: auto 1fr;/s);
 assert.match(styles, /\.cv-submit-box\s*\{[^}]*grid-template-rows: auto auto auto 1fr;/s);
+assert.match(styles, /\.contact-request\s*\{[^}]*border: 1px solid rgba\(201, 220, 40, 0\.38\);/s);
+assert.match(styles, /\.contact-grid\s*\{[^}]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);/s);
 assert.match(styles, /@media \(max-width: 760px\)[\s\S]*?\.cv-input-grid\s*\{[^}]*grid-template-columns: 1fr;/);
 assert.match(html, /Очередь вакансий/);
 assert.match(html, /Ссылка на вакансию/);
@@ -77,13 +80,18 @@ assert.doesNotMatch(html, /Название, компания, регион, я�
 assert.doesNotMatch(html, /Исходник вакансии/);
 assert.doesNotMatch(html, /Выберите источник/);
 
+const emptyContacts: ContactDetails = { email: "", linkedin: "", portfolio: "", telegram: "" };
 const emptyIntake = renderToStaticMarkup(
   <CvIntake
     cvText=""
     cvFileName=""
+    contacts={emptyContacts}
+    showContactFields={false}
+    missingContactLabels={[]}
     isMatching={false}
     onCvTextChange={() => undefined}
     onCvFileChange={() => undefined}
+    onContactChange={() => undefined}
     onMatch={() => undefined}
   />
 );
@@ -93,6 +101,53 @@ assert.doesNotMatch(emptyIntake, /Выберите язык/);
 assert.doesNotMatch(emptyIntake, /Requirements/);
 assert.doesNotMatch(emptyIntake, /Responsibilities/);
 assert.match(emptyIntake, /Выбрать файл/);
+
+const contactIntake = renderToStaticMarkup(
+  <CvIntake
+    cvText="Aleksandr Grenkov Lead Product Designer"
+    cvFileName=""
+    contacts={emptyContacts}
+    showContactFields
+    missingContactLabels={["Email", "LinkedIn", "Portfolio", "Telegram"]}
+    isMatching={false}
+    onCvTextChange={() => undefined}
+    onCvFileChange={() => undefined}
+    onContactChange={() => undefined}
+    onMatch={() => undefined}
+  />
+);
+assert.match(contactIntake, /Контакты для CV/);
+assert.match(contactIntake, /Не нашёл в CV: Email, LinkedIn, Portfolio, Telegram/);
+assert.match(contactIntake, /name@example\.com/);
+assert.match(contactIntake, /https:\/\/www\.linkedin\.com\/in\/\.\.\./);
+assert.match(contactIntake, /@username/);
+
+assert.deepEqual(
+  missingRequiredContactInputs("Aleksandr Grenkov Lead Product Designer", false, {
+    email: "aleksandr@example.com",
+    linkedin: "",
+    portfolio: "",
+    telegram: ""
+  }),
+  ["linkedin", "portfolio", "telegram"]
+);
+assert.equal(
+  missingRequiredContactInputs(
+    "aleksandr@example.com https://www.linkedin.com/in/aleksandr-grenkov https://grenkov.design @agrenkov",
+    false,
+    emptyContacts
+  ).length,
+  0
+);
+assert.match(
+  candidateTextWithContacts("Aleksandr Grenkov", {
+    email: "aleksandr@example.com",
+    linkedin: "https://www.linkedin.com/in/aleksandr-grenkov",
+    portfolio: "https://grenkov.design",
+    telegram: "@agrenkov"
+  }),
+  /Contact details:\nEmail: aleksandr@example\.com\nLinkedIn: https:\/\/www\.linkedin\.com\/in\/aleksandr-grenkov\nPortfolio: https:\/\/grenkov\.design\nTelegram: @agrenkov/
+);
 
 const preloader = renderToStaticMarkup(<GlobalPreloader label="Обрабатываю данные..." />);
 assert.match(preloader, /global-preloader/);
