@@ -147,6 +147,66 @@ def test_create_vacancy_accepts_source_description_and_generates_tailored_cv():
         assert "https://www.linkedin.com/jobs/example" not in text
 
 
+def test_tailored_cv_header_contacts_expertise_tags_and_no_work_dates():
+    reset_database()
+    cv_text = """Aleksandr Grenkov
+Lead Product Designer
+aleksandr@example.com
+https://www.linkedin.com/in/aleksandr-grenkov
+https://grenkov.design
+Telegram: @agrenkov
+Automotive UX Voice UX Design Systems Enterprise UX English B2
+"""
+    with TestClient(app) as client:
+        candidate = client.post("/api/candidate/text", json={"text": cv_text})
+        assert candidate.status_code == 200
+
+        created_response = client.post(
+            "/api/vacancies",
+            json={
+                "external_id": "CONTACTS-1",
+                "source": "LinkedIn",
+                "company": "VehicleCo",
+                "title": "Lead Product Designer - Automotive HMI",
+                "location": "Remote",
+                "language": "English",
+                "description_raw": "Lead UX for automotive HMI, design systems, and multimodal interaction.",
+                "requirements": "Automotive UX; HMI; Voice UX; Figma; Design Systems; Component Governance",
+                "responsibilities": "Define product strategy and partner with engineering on vehicle interfaces.",
+            },
+        )
+        assert created_response.status_code == 200
+        assert client.post("/api/analysis/run").status_code == 200
+
+        vacancy = client.get("/api/vacancies").json()[0]
+        cv_response = client.get(vacancy["cv_file_path"])
+        assert cv_response.status_code == 200
+
+        document = Document(BytesIO(cv_response.content))
+        paragraphs = [paragraph for paragraph in document.paragraphs if paragraph.text.strip()]
+        text = "\n".join(paragraph.text for paragraph in paragraphs)
+
+        assert "ALEKSANDR GRENKOV" in text
+        assert "Candidate" not in text
+        assert "aleksandr@example.com" in text
+        assert "linkedin.com/in/aleksandr-grenkov" in text
+        assert "grenkov.design" in text
+        assert "@agrenkov" in text
+        assert "Open to international and remote opportunities." in text
+
+        core_index = next(index for index, paragraph in enumerate(paragraphs) if paragraph.text == "CORE EXPERTISE")
+        core_tags = paragraphs[core_index + 1]
+        assert core_tags.style.name != "List Bullet"
+        assert " • " in core_tags.text
+        assert "Automotive UX" in core_tags.text
+        assert "HMI" in core_tags.text
+        assert "Voice UX" in core_tags.text
+        assert "Design Systems" in core_tags.text
+
+        assert "2023-2026" not in text
+        assert "2022-2023" not in text
+
+
 def test_tailored_cv_uses_russian_for_russian_vacancy():
     reset_database()
     with TestClient(app) as client:

@@ -1,4 +1,6 @@
 from io import BytesIO
+import re
+from typing import Optional
 
 from docx import Document
 from docx.shared import Inches, Pt
@@ -47,7 +49,7 @@ def build_master_cv_document(profile: CandidateProfile) -> BytesIO:
     document.add_heading("Professional Experience", level=2)
     _add_experience_template(
         document,
-        "Lead Product Designer — ATOM, Electric Vehicle Startup | 2023-2026",
+        "Lead Product Designer — ATOM, Electric Vehicle Startup",
         [
             "Established a scalable voice interaction framework by defining intents, prompts, tone of voice, and multimodal patterns for in-car assistant scenarios.",
             "Structured in-vehicle UX logic by mapping customer journeys, information architecture, and reusable interaction patterns for HMI scenarios.",
@@ -56,7 +58,7 @@ def build_master_cv_document(profile: CandidateProfile) -> BytesIO:
     )
     _add_experience_template(
         document,
-        "Product Designer — Information Technology Factory | 2022-2023",
+        "Product Designer — Information Technology Factory",
         [
             "Simplified city-scale operator workflows by designing dashboards, parking apps, and transport-system interfaces for monitoring and control scenarios.",
             "Delivered mobile parking app experiences by translating research, user flows, and information architecture into Android and iOS interfaces.",
@@ -115,7 +117,7 @@ def build_tailored_cv_document(profile: CandidateProfile, vacancy: Vacancy) -> B
 
 def _build_english_tailored_resume_document(profile: CandidateProfile, vacancy: Vacancy) -> BytesIO:
     document = _base_document()
-    _add_title(document, profile.name.upper() or "ALEKSANDR GRENKOV", vacancy.title or "Lead Product Designer")
+    _add_title(document, _candidate_display_name(profile), vacancy.title or "Lead Product Designer", profile=profile)
     document.add_paragraph(_headline_tags(vacancy))
 
     document.add_heading("EXECUTIVE SUMMARY", level=2)
@@ -133,7 +135,7 @@ def _build_english_tailored_resume_document(profile: CandidateProfile, vacancy: 
     )
 
     document.add_heading("CORE EXPERTISE", level=2)
-    _add_bullets(document, _core_expertise(vacancy))
+    _add_tag_paragraph(document, _core_expertise(vacancy))
 
     document.add_heading("SELECTED CAREER IMPACT", level=2)
     _add_bullets(document, _career_impact_bullets(vacancy))
@@ -160,7 +162,13 @@ def _build_english_tailored_resume_document(profile: CandidateProfile, vacancy: 
 
 def _build_russian_tailored_resume_document(profile: CandidateProfile, vacancy: Vacancy) -> BytesIO:
     document = _base_document()
-    _add_title(document, profile.name.upper() or "ALEKSANDR GRENKOV", vacancy.title or "Ведущий продуктовый дизайнер", language="ru")
+    _add_title(
+        document,
+        _candidate_display_name(profile),
+        vacancy.title or "Ведущий продуктовый дизайнер",
+        language="ru",
+        profile=profile,
+    )
     document.add_paragraph(_headline_tags(vacancy, language="ru"))
 
     document.add_heading("ПРОФЕССИОНАЛЬНЫЙ ПРОФИЛЬ", level=2)
@@ -178,7 +186,7 @@ def _build_russian_tailored_resume_document(profile: CandidateProfile, vacancy: 
     )
 
     document.add_heading("КЛЮЧЕВАЯ ЭКСПЕРТИЗА", level=2)
-    _add_bullets(document, _core_expertise(vacancy, language="ru"))
+    _add_tag_paragraph(document, _core_expertise(vacancy, language="ru"))
 
     document.add_heading("КЛЮЧЕВОЙ КАРЬЕРНЫЙ ЭФФЕКТ", level=2)
     _add_bullets(document, _career_impact_bullets(vacancy, language="ru"))
@@ -232,7 +240,7 @@ def _domain_focus(vacancy: Vacancy, language: str = "en") -> str:
 def _core_expertise(vacancy: Vacancy, language: str = "en") -> list[str]:
     text = _vacancy_text(vacancy)
     if language == "ru":
-        base = [
+        base = _split_keywords(vacancy.top_match_keywords or vacancy.vacancy_keywords)[:10] + [
             "Продуктовая стратегия",
             "UX-стратегия",
             "Дизайн-лидерство",
@@ -250,9 +258,8 @@ def _core_expertise(vacancy: Vacancy, language: str = "en") -> list[str]:
             base.extend(["Enterprise UX", "SaaS", "Дашборды", "Оптимизация workflow", "Сложные системы", "Визуализация данных"])
         if _has_any(text, "component", "tokens", "variables", "governance", "дизайн-систем"):
             base.extend(["Библиотека компонентов", "Design Tokens", "Figma Variables", "Design Governance", "DesignOps"])
-        base.extend(_split_keywords(vacancy.top_match_keywords or vacancy.vacancy_keywords)[:8])
         return list(dict.fromkeys(base))
-    base = [
+    base = _split_keywords(vacancy.top_match_keywords or vacancy.vacancy_keywords)[:10] + [
         "Product Strategy",
         "UX Strategy",
         "Design Leadership",
@@ -270,7 +277,6 @@ def _core_expertise(vacancy: Vacancy, language: str = "en") -> list[str]:
         base.extend(["Enterprise UX", "SaaS", "Dashboard Design", "Workflow Optimization", "Complex Systems", "Data Visualization"])
     if _has_any(text, "component", "tokens", "variables", "governance", "дизайн-систем"):
         base.extend(["Component Library", "Design Tokens", "Figma Variables", "Design Governance", "DesignOps"])
-    base.extend(_split_keywords(vacancy.top_match_keywords or vacancy.vacancy_keywords)[:8])
     return list(dict.fromkeys(base))
 
 
@@ -317,12 +323,12 @@ def _resume_experience_blocks(vacancy: Vacancy, language: str = "en") -> list[tu
             atom_bullets.append("Укрепил дизайн-системный подход для сложных automotive-сценариев, связав reusable patterns, interface states и продуктовую логику.")
         return [
             (
-                "Lead Product Designer — ATOM, Electric Vehicle Startup | 2023-2026",
+                "Lead Product Designer — ATOM, Electric Vehicle Startup",
                 "Автомобильный продуктовый дизайн, voice UX, HMI, AI interaction и sound experience для электромобиля.",
                 atom_bullets,
             ),
             (
-                "Product Designer — Information Technology Factory | 2022-2023",
+                "Product Designer — Information Technology Factory",
                 "Enterprise UX для smart city, транспорта, парковочных систем, dashboards и операторских интерфейсов.",
                 [
                     "Поставил city-scale operator workflows, преобразовав сложные транспортные и парковочные процессы в понятные dashboards, mobile flows и интерфейсы мониторинга.",
@@ -355,12 +361,12 @@ def _resume_experience_blocks(vacancy: Vacancy, language: str = "en") -> list[tu
         atom_bullets.append("Established design-system principles for complex automotive scenarios by aligning reusable patterns, interface states and product logic.")
     return [
         (
-            "Lead Product Designer — ATOM, Electric Vehicle Startup | 2023-2026",
+            "Lead Product Designer — ATOM, Electric Vehicle Startup",
             "Automotive product design, Voice UX, HMI, AI interaction and sound experience for an electric vehicle.",
             atom_bullets,
         ),
         (
-            "Product Designer — Information Technology Factory | 2022-2023",
+            "Product Designer — Information Technology Factory",
             "Enterprise UX for smart city, transportation, parking systems, dashboards and operator interfaces.",
             [
                 "Delivered city-scale operator workflows by transforming complex transportation and parking processes into clear dashboards, mobile flows and monitoring interfaces.",
@@ -415,17 +421,65 @@ def _base_document() -> Document:
     return document
 
 
-def _add_title(document: Document, name: str, headline: str, language: str = "en") -> None:
+def _candidate_display_name(profile: CandidateProfile) -> str:
+    name = profile.name.strip()
+    if not name or name.lower() == "candidate":
+        return "ALEKSANDR GRENKOV"
+    return name.upper()
+
+
+def _add_title(
+    document: Document,
+    name: str,
+    headline: str,
+    language: str = "en",
+    profile: Optional[CandidateProfile] = None,
+) -> None:
     paragraph = document.add_paragraph()
     run = paragraph.add_run(name)
     run.bold = True
     run.font.size = Pt(16)
     subtitle = document.add_paragraph()
     subtitle.add_run(headline).bold = True
-    if language == "ru":
-        document.add_paragraph("Email • LinkedIn • Портфолио • Telegram • открыт к удаленным и международным возможностям")
-    else:
-        document.add_paragraph("Email • LinkedIn • Portfolio • Telegram • Open to international and remote opportunities")
+    document.add_paragraph(_contact_line(profile))
+
+
+def _contact_line(profile: Optional[CandidateProfile]) -> str:
+    contacts = _extract_contacts(profile.raw_cv_text if profile else "")
+    parts = [
+        contacts.get("email") or "Email",
+        contacts.get("linkedin") or "LinkedIn",
+        contacts.get("portfolio") or "Portfolio",
+        contacts.get("telegram") or "Telegram",
+        "Open to international and remote opportunities.",
+    ]
+    return " • ".join(parts)
+
+
+def _extract_contacts(text: str) -> dict[str, str]:
+    urls = [_clean_contact(match) for match in re.findall(r"https?://[^\s,)>\]]+", text)]
+    email_match = re.search(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}", text)
+    telegram_match = re.search(r"(?:^|[\s:])(@[A-Za-z0-9_]{4,})\b", text, flags=re.IGNORECASE)
+    linkedin = next((url for url in urls if "linkedin.com/" in url.lower()), "")
+    telegram_url = next((url for url in urls if "t.me/" in url.lower()), "")
+    portfolio = next(
+        (
+            url
+            for url in urls
+            if "linkedin.com/" not in url.lower() and "t.me/" not in url.lower() and "hh.ru/" not in url.lower()
+        ),
+        "",
+    )
+    return {
+        "email": email_match.group(0) if email_match else "",
+        "linkedin": linkedin,
+        "portfolio": portfolio,
+        "telegram": telegram_match.group(1) if telegram_match else telegram_url,
+    }
+
+
+def _clean_contact(value: str) -> str:
+    return value.strip().rstrip(".,;:")
 
 
 def _add_bullets(document: Document, items: list[str]) -> None:
@@ -435,6 +489,12 @@ def _add_bullets(document: Document, items: list[str]) -> None:
             paragraph.add_run(item.strip())
 
 
+def _add_tag_paragraph(document: Document, items: list[str]) -> None:
+    tags = [item.strip() for item in items if item.strip()]
+    if tags:
+        document.add_paragraph(" • ".join(tags))
+
+
 def _add_experience_template(document: Document, heading: str, bullets: list[str]) -> None:
     paragraph = document.add_paragraph()
     paragraph.add_run(heading).bold = True
@@ -442,7 +502,7 @@ def _add_experience_template(document: Document, heading: str, bullets: list[str
 
 
 def _split_keywords(value: str) -> list[str]:
-    return [item.strip() for item in value.split(";") if item.strip()]
+    return [item.strip() for item in re.split(r"[;\n,|•]+", value or "") if item.strip()]
 
 
 def _is_russian_vacancy(vacancy: Vacancy) -> bool:
