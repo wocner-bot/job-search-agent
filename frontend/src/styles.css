@@ -350,8 +350,50 @@ select:focus {
 }
 
 .cv-review-panel {
+  background:
+    linear-gradient(135deg, rgba(201, 220, 40, 0.2), rgba(49, 174, 230, 0.1) 42%, rgba(255, 255, 255, 0.1)),
+    var(--surface);
+  border-color: rgba(201, 220, 40, 0.58);
+  box-shadow:
+    0 22px 70px rgba(201, 220, 40, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
   display: grid;
   gap: var(--space-panel);
+  overflow: hidden;
+  position: relative;
+}
+
+.cv-review-panel::before {
+  background: linear-gradient(90deg, var(--accent), var(--accent-blue));
+  content: "";
+  height: 4px;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.cv-review-title-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.cv-review-title-row h2 {
+  font-size: 26px;
+}
+
+.cv-review-badge {
+  background: rgba(201, 220, 40, 0.18);
+  border: 1px solid rgba(201, 220, 40, 0.45);
+  border-radius: 999px;
+  color: #f3ff76;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 6px 10px;
+  text-transform: uppercase;
 }
 
 .cv-review-panel .panel-header p {
@@ -372,6 +414,8 @@ select:focus {
 }
 
 .cv-review-grid textarea {
+  background: rgba(5, 7, 8, 0.48);
+  border-color: rgba(201, 220, 40, 0.22);
   min-height: 320px;
   resize: vertical;
 }
@@ -392,12 +436,17 @@ select:focus {
 }
 
 .role-match-card {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--line);
+  background: rgba(5, 7, 8, 0.34);
+  border: 1px solid rgba(201, 220, 40, 0.2);
   border-radius: 8px;
   display: grid;
   gap: 8px;
   padding: var(--space-field);
+}
+
+.role-match-card:hover {
+  background: rgba(5, 7, 8, 0.46);
+  border-color: rgba(201, 220, 40, 0.42);
 }
 
 .role-match-card div {

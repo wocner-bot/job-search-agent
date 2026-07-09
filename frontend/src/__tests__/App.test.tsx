@@ -63,6 +63,9 @@ assert.match(styles, /\.cv-text-block\s*\{[^}]*grid-template-rows: auto 1fr;/s);
 assert.match(styles, /\.cv-submit-box\s*\{[^}]*grid-template-rows: auto auto auto 1fr;/s);
 assert.match(styles, /\.contact-request\s*\{[^}]*border: 1px solid rgba\(201, 220, 40, 0\.38\);/s);
 assert.match(styles, /\.contact-grid\s*\{[^}]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);/s);
+assert.match(styles, /\.cv-review-panel\s*\{[^}]*border-color: rgba\(201, 220, 40, 0\.58\);/s);
+assert.match(styles, /\.cv-review-panel::before\s*\{[^}]*linear-gradient\(90deg, var\(--accent\), var\(--accent-blue\)\);/s);
+assert.match(styles, /\.cv-review-badge\s*\{[^}]*text-transform: uppercase;/s);
 assert.match(styles, /\.cv-review-grid\s*\{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/s);
 assert.match(styles, /\.role-match-grid\s*\{[^}]*grid-template-columns: repeat\(4, minmax\(240px, 1fr\)\);/s);
 assert.match(styles, /@media \(max-width: 760px\)[\s\S]*?\.cv-input-grid\s*\{[^}]*grid-template-columns: 1fr;/);
@@ -172,6 +175,7 @@ const reviewHtml = renderToStaticMarkup(
   />
 );
 assert.match(reviewHtml, /Анализ исходного CV/);
+assert.match(reviewHtml, /Senior recruiter review/);
 assert.match(reviewHtml, /Исходное CV/);
 assert.match(reviewHtml, /Улучшенная версия CV/);
 assert.match(reviewHtml, /20 подходящих должностей и ключевые слова/);

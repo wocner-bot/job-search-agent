@@ -6,7 +6,10 @@ export function CvReviewPanel({ review }: { review: CandidateReview | null }) {
     <section className="panel cv-review-panel">
       <div className="panel-header">
         <div>
-          <h2>Анализ исходного CV</h2>
+          <div className="cv-review-title-row">
+            <span className="cv-review-badge">Senior recruiter review</span>
+            <h2>Анализ исходного CV</h2>
+          </div>
           <p>Рекрутерская версия CV и 20 должностей, для которых профиль подходит лучше всего.</p>
         </div>
       </div>
