@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import App, { candidateTextWithContacts, missingRequiredContactInputs, type ContactDetails } from "../App.tsx";
 import { apiUrl } from "../api.ts";
 import { CvIntake } from "../components/CvIntake.tsx";
+import { CvReviewPanel } from "../components/CvReviewPanel.tsx";
 import { GlobalPreloader } from "../components/GlobalPreloader.tsx";
 import { MetricsStrip } from "../components/MetricsStrip.tsx";
 import { VacancyDetail } from "../components/VacancyDetail.tsx";
@@ -62,6 +63,8 @@ assert.match(styles, /\.cv-text-block\s*\{[^}]*grid-template-rows: auto 1fr;/s);
 assert.match(styles, /\.cv-submit-box\s*\{[^}]*grid-template-rows: auto auto auto 1fr;/s);
 assert.match(styles, /\.contact-request\s*\{[^}]*border: 1px solid rgba\(201, 220, 40, 0\.38\);/s);
 assert.match(styles, /\.contact-grid\s*\{[^}]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);/s);
+assert.match(styles, /\.cv-review-grid\s*\{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/s);
+assert.match(styles, /\.role-match-grid\s*\{[^}]*grid-template-columns: repeat\(4, minmax\(240px, 1fr\)\);/s);
 assert.match(styles, /@media \(max-width: 760px\)[\s\S]*?\.cv-input-grid\s*\{[^}]*grid-template-columns: 1fr;/);
 assert.match(html, /Очередь вакансий/);
 assert.match(html, /Ссылка на вакансию/);
@@ -148,6 +151,32 @@ assert.match(
   }),
   /Contact details:\nEmail: aleksandr@example\.com\nLinkedIn: https:\/\/www\.linkedin\.com\/in\/aleksandr-grenkov\nPortfolio: https:\/\/grenkov\.design\nTelegram: @agrenkov/
 );
+
+const reviewHtml = renderToStaticMarkup(
+  <CvReviewPanel
+    review={{
+      source_cv: "Aleksandr Grenkov original CV",
+      improved_cv: "ALEKSANDR GRENKOV\nEXECUTIVE SUMMARY\nCORE EXPERTISE",
+      role_matches: [
+        {
+          rank: 1,
+          title: "Lead Product Designer",
+          fit_score: 96,
+          priority: "Very High",
+          headline: "Lead Product Designer — product strategy",
+          keywords: ["Product Design", "UX Strategy", "Design Systems"],
+          strategy: "Lead with product strategy"
+        }
+      ]
+    }}
+  />
+);
+assert.match(reviewHtml, /Анализ исходного CV/);
+assert.match(reviewHtml, /Исходное CV/);
+assert.match(reviewHtml, /Улучшенная версия CV/);
+assert.match(reviewHtml, /20 подходящих должностей и ключевые слова/);
+assert.match(reviewHtml, /Lead Product Designer/);
+assert.match(reviewHtml, /Product Design • UX Strategy • Design Systems/);
 
 const preloader = renderToStaticMarkup(<GlobalPreloader label="Обрабатываю данные..." />);
 assert.match(preloader, /global-preloader/);

@@ -19,3 +19,12 @@ Each vacancy-specific DOCX must read like a finished human CV, not an agent work
 ## Testing
 
 Backend tests must verify that a generated tailored CV contains the candidate name, contact data, vacancy-relevant skill tags, and no work dates or agent-facing sections.
+
+## Recruiter CV Review
+
+The app must provide a recruiter-style review of the latest candidate profile. The review shows:
+
+- The extracted source CV text.
+- An improved ATS-friendly CV version using strong action verbs and recruiter-safe claims.
+- Exactly 20 best-fit target roles.
+- Exact keywords for each role so the candidate can search vacancies and adapt CV versions quickly.

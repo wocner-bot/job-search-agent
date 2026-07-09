@@ -49,3 +49,19 @@ export interface ApplicationMaterial {
   email_cover_letter: string;
   fit_summary: string;
 }
+
+export interface CandidateRoleMatch {
+  rank: number;
+  title: string;
+  fit_score: number;
+  priority: string;
+  headline: string;
+  keywords: string[];
+  strategy: string;
+}
+
+export interface CandidateReview {
+  source_cv: string;
+  improved_cv: string;
+  role_matches: CandidateRoleMatch[];
+}

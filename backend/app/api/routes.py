@@ -11,6 +11,7 @@ from app.database import get_session
 from app.models import ApplicationMaterial, CandidateProfile, StatusEvent, Vacancy
 from app.schemas import StatusUpdate, VacancyCreate
 from app.services.cv_parser import extract_profile_from_text, read_cv_text
+from app.services.cv_review import build_candidate_review
 from app.services.cv_writer import build_master_cv_document, build_tailored_cv_document
 from app.services.exporter import export_zip_package
 from app.services.importer import import_csv_rows, import_xlsx_sheet, normalize_queue_row
@@ -90,6 +91,14 @@ def _candidate_contact_block(payload: dict[str, str]) -> str:
         if value:
             lines.append(f"{label}: {value}")
     return "\n".join(["Contact details:", *lines]) if lines else ""
+
+
+@router.get("/candidate/review")
+def review_candidate_cv(session: Session = Depends(get_session)) -> dict:
+    profile = session.exec(select(CandidateProfile).order_by(CandidateProfile.id.desc())).first()
+    if not profile:
+        raise HTTPException(status_code=400, detail="Create a candidate profile first")
+    return build_candidate_review(profile)
 
 
 @router.get("/vacancies")

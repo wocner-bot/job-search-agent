@@ -254,6 +254,36 @@ def test_candidate_contacts_endpoint_adds_missing_contacts_to_tailored_cv():
         assert "@agrenkov" in text
 
 
+def test_candidate_review_returns_improved_cv_and_twenty_role_matches():
+    reset_database()
+    cv_text = (
+        "Aleksandr Grenkov Lead Product Designer Automotive UX HMI Voice UX "
+        "Design Systems Enterprise UX Smart City Transport English B2"
+    )
+    with TestClient(app) as client:
+        candidate = client.post("/api/candidate/text", json={"text": cv_text})
+        assert candidate.status_code == 200
+
+        response = client.get("/api/candidate/review")
+        assert response.status_code == 200
+        review = response.json()
+
+        assert "Aleksandr Grenkov" in review["source_cv"]
+        assert "ALEKSANDR GRENKOV" in review["improved_cv"]
+        assert "EXECUTIVE SUMMARY" in review["improved_cv"]
+        assert "CORE EXPERTISE" in review["improved_cv"]
+        assert "SELECTED CAREER IMPACT" in review["improved_cv"]
+        assert "Lead Product Designer with 10+ years" in review["improved_cv"]
+        assert "Worked on" not in review["improved_cv"]
+        assert "Responsible for" not in review["improved_cv"]
+        assert "Participated in" not in review["improved_cv"]
+        assert len(review["role_matches"]) == 20
+        assert review["role_matches"][0]["rank"] == 1
+        assert review["role_matches"][0]["title"] == "Lead Product Designer"
+        assert "Product Design" in review["role_matches"][0]["keywords"]
+        assert "UX Strategy" in review["role_matches"][0]["keywords"]
+
+
 def test_tailored_cv_uses_russian_for_russian_vacancy():
     reset_database()
     with TestClient(app) as client:

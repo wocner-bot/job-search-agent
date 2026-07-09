@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { api } from "./api.ts";
 import { CvIntake } from "./components/CvIntake.tsx";
+import { CvReviewPanel } from "./components/CvReviewPanel.tsx";
 import { ExportBar } from "./components/ExportBar.tsx";
 import { GlobalPreloader } from "./components/GlobalPreloader.tsx";
 import { Layout } from "./components/Layout.tsx";
@@ -8,7 +9,7 @@ import { MetricsStrip } from "./components/MetricsStrip.tsx";
 import { type Filters, VacancyFilters } from "./components/VacancyFilters.tsx";
 import { VacancyDetail } from "./components/VacancyDetail.tsx";
 import { VacancyTable } from "./components/VacancyTable.tsx";
-import type { ApplicationMaterial, ApplicationStatus, Vacancy } from "./types.ts";
+import type { ApplicationMaterial, ApplicationStatus, CandidateReview, Vacancy } from "./types.ts";
 import { matchesRegion, workModeForVacancy } from "./vacancyFilters.ts";
 
 export type ContactKey = "email" | "linkedin" | "portfolio" | "telegram";
@@ -33,6 +34,7 @@ export default function App() {
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [contacts, setContacts] = useState<ContactDetails>(EMPTY_CONTACTS);
   const [isMatching, setIsMatching] = useState(false);
+  const [cvReview, setCvReview] = useState<CandidateReview | null>(null);
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [materials, setMaterials] = useState<ApplicationMaterial[]>([]);
   const [selected, setSelected] = useState<Vacancy | undefined>();
@@ -85,6 +87,7 @@ export default function App() {
       } else {
         await api.createCandidateFromText(candidateTextWithContacts(cvText, contacts));
       }
+      setCvReview(await api.reviewCandidate());
       const analyzed = await api.collectMatchesFromSources();
       await refresh();
       setMessage(
@@ -131,6 +134,7 @@ export default function App() {
         onContactChange={(key, value) => setContacts((current) => ({ ...current, [key]: value }))}
         onMatch={matchVacancies}
       />
+      <CvReviewPanel review={cvReview} />
       <MetricsStrip vacancies={vacancies} />
       <section id="queue" className="queue-layout">
         <div className="panel">

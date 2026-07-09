@@ -349,6 +349,78 @@ select:focus {
   padding: 10px var(--space-field);
 }
 
+.cv-review-panel {
+  display: grid;
+  gap: var(--space-panel);
+}
+
+.cv-review-panel .panel-header p {
+  color: var(--muted);
+  margin: 6px 0 0;
+}
+
+.cv-review-grid {
+  display: grid;
+  gap: var(--space-field);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cv-review-grid label {
+  display: grid;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.cv-review-grid textarea {
+  min-height: 320px;
+  resize: vertical;
+}
+
+.role-match-section {
+  display: grid;
+  gap: var(--space-field);
+}
+
+.role-match-section h2 {
+  font-size: 18px;
+}
+
+.role-match-grid {
+  display: grid;
+  gap: var(--space-field);
+  grid-template-columns: repeat(4, minmax(240px, 1fr));
+}
+
+.role-match-card {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: var(--space-field);
+}
+
+.role-match-card div {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.role-match-card span {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.role-match-card p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.role-match-card small {
+  color: var(--text);
+  line-height: 1.5;
+}
+
 @media (max-width: 760px) {
   .upload-grid {
     grid-template-columns: 1fr;
@@ -367,6 +439,11 @@ select:focus {
   }
 
   .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cv-review-grid,
+  .role-match-grid {
     grid-template-columns: 1fr;
   }
 }
