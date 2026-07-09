@@ -71,11 +71,6 @@ export default function App() {
       setMessage("Добавьте CV текстом или файлом.");
       return;
     }
-    const missingInputs = missingRequiredContactInputs(cvText, Boolean(cvFile), contacts);
-    if (missingInputs.length > 0) {
-      setMessage(`Добавьте контакты для CV: ${missingInputs.map((key) => CONTACT_LABELS[key]).join(", ")}.`);
-      return;
-    }
     setIsMatching(true);
     setMessage("Анализирую CV и ищу конкретные вакансии в LinkedIn, HH.ru и Telegram...");
     try {
@@ -163,7 +158,7 @@ export function missingCvContactKeys(cvText: string, hasCvFile: boolean): Contac
   });
 }
 
-export function missingRequiredContactInputs(cvText: string, hasCvFile: boolean, contacts: ContactDetails): ContactKey[] {
+export function missingOptionalContactInputs(cvText: string, hasCvFile: boolean, contacts: ContactDetails): ContactKey[] {
   return missingCvContactKeys(cvText, hasCvFile).filter((key) => !contacts[key].trim());
 }
 

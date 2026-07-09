@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
-import App, { candidateTextWithContacts, missingRequiredContactInputs, type ContactDetails } from "../App.tsx";
+import App, { candidateTextWithContacts, missingOptionalContactInputs, type ContactDetails } from "../App.tsx";
 import { apiUrl } from "../api.ts";
 import { CvIntake } from "../components/CvIntake.tsx";
 import { CvReviewPanel } from "../components/CvReviewPanel.tsx";
@@ -123,13 +123,13 @@ const contactIntake = renderToStaticMarkup(
   />
 );
 assert.match(contactIntake, /Контакты для CV/);
-assert.match(contactIntake, /Не нашёл в CV: Email, LinkedIn, Portfolio, Telegram/);
+assert.match(contactIntake, /Можно заполнить сейчас или продолжить поиск без контактов/);
 assert.match(contactIntake, /name@example\.com/);
 assert.match(contactIntake, /https:\/\/www\.linkedin\.com\/in\/\.\.\./);
 assert.match(contactIntake, /@username/);
 
 assert.deepEqual(
-  missingRequiredContactInputs("Aleksandr Grenkov Lead Product Designer", false, {
+  missingOptionalContactInputs("Aleksandr Grenkov Lead Product Designer", false, {
     email: "aleksandr@example.com",
     linkedin: "",
     portfolio: "",
@@ -138,7 +138,7 @@ assert.deepEqual(
   ["linkedin", "portfolio", "telegram"]
 );
 assert.equal(
-  missingRequiredContactInputs(
+  missingOptionalContactInputs(
     "aleksandr@example.com https://www.linkedin.com/in/aleksandr-grenkov https://grenkov.design @agrenkov",
     false,
     emptyContacts

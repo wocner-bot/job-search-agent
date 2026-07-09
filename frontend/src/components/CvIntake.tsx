@@ -63,7 +63,7 @@ export function CvIntake({
         <div className="contact-request">
           <div>
             <h2>Контакты для CV</h2>
-            <p>Не нашёл в CV: {missingContactLabels.join(", ")}. Заполните поля, чтобы они попали в каждое адаптированное резюме.</p>
+            <p>Не нашёл в CV: {missingContactLabels.join(", ")}. Можно заполнить сейчас или продолжить поиск без контактов.</p>
           </div>
           <div className="contact-grid">
             <label>
