@@ -2,6 +2,8 @@
 
 React + FastAPI web app for turning a CV and vacancy queue into ready-to-send job application materials.
 
+The consolidated rebuild blueprint is stored in `docs/PROJECT_REBUILD_BLUEPRINT.md`. Use it as the source of truth for rebuilding the project from scratch.
+
 ## MVP
 
 - paste or upload a CV
