@@ -129,7 +129,7 @@ export default function App() {
         onContactChange={(key, value) => setContacts((current) => ({ ...current, [key]: value }))}
         onMatch={matchVacancies}
       />
-      <CvReviewPanel review={cvReview} />
+      <CvReviewPanel review={cvReview} vacancies={vacancies} />
       <MetricsStrip vacancies={vacancies} />
       <section id="queue" className="queue-layout">
         <div className="panel">

@@ -67,7 +67,7 @@ assert.match(styles, /\.cv-review-panel\s*\{[^}]*border-color: rgba\(201, 220, 4
 assert.match(styles, /\.cv-review-panel::before\s*\{[^}]*linear-gradient\(90deg, var\(--accent\), var\(--accent-blue\)\);/s);
 assert.match(styles, /\.cv-review-badge\s*\{[^}]*text-transform: uppercase;/s);
 assert.match(styles, /\.cv-review-grid\s*\{[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/s);
-assert.match(styles, /\.role-match-grid\s*\{[^}]*grid-template-columns: repeat\(4, minmax\(240px, 1fr\)\);/s);
+assert.match(styles, /\.final-vacancy-grid\s*\{[^}]*grid-template-columns: repeat\(4, minmax\(240px, 1fr\)\);/s);
 assert.match(styles, /@media \(max-width: 760px\)[\s\S]*?\.cv-input-grid\s*\{[^}]*grid-template-columns: 1fr;/);
 assert.match(html, /Очередь вакансий/);
 assert.match(html, /Ссылка на вакансию/);
@@ -155,6 +155,35 @@ assert.match(
   /Contact details:\nEmail: aleksandr@example\.com\nLinkedIn: https:\/\/www\.linkedin\.com\/in\/aleksandr-grenkov\nPortfolio: https:\/\/grenkov\.design\nTelegram: @agrenkov/
 );
 
+const reviewVacancy = {
+  id: 9,
+  external_id: "R09",
+  rank: 1,
+  source: "LinkedIn",
+  company: "Example",
+  title: "Lead Product Designer",
+  location: "Remote / Europe",
+  posted: "",
+  date_status: "",
+  language: "English",
+  fit_score: 96,
+  priority: "Very High",
+  submit_status: "Ready to send",
+  next_action: "",
+  cv_file_path: "/api/vacancies/9/tailored-cv.docx",
+  pdf_file_path: "",
+  png_preview_path: "",
+  source_url: "https://example.com/job",
+  description_raw: "Lead product design and design systems",
+  requirements: "",
+  responsibilities: "",
+  vacancy_keywords: "Product Design; Design Systems",
+  tailored_headline: "Lead Product Designer",
+  top_match_keywords: "Product Design; UX Strategy; Design Systems",
+  gaps_risks: "",
+  adaptation_strategy: ""
+} as Vacancy;
+
 const reviewHtml = renderToStaticMarkup(
   <CvReviewPanel
     review={{
@@ -172,15 +201,20 @@ const reviewHtml = renderToStaticMarkup(
         }
       ]
     }}
+    vacancies={[reviewVacancy]}
   />
 );
 assert.match(reviewHtml, /Анализ исходного CV/);
 assert.match(reviewHtml, /Senior recruiter review/);
 assert.match(reviewHtml, /Исходное CV/);
 assert.match(reviewHtml, /Улучшенная версия CV/);
-assert.match(reviewHtml, /20 подходящих должностей и ключевые слова/);
+assert.match(reviewHtml, /Финальные вакансии и соответствие исходному CV/);
 assert.match(reviewHtml, /Lead Product Designer/);
-assert.match(reviewHtml, /Product Design • UX Strategy • Design Systems/);
+assert.match(reviewHtml, /Совпадение с CV: 96%/);
+assert.match(reviewHtml, /Открыть вакансию/);
+assert.match(reviewHtml, /Открыть CV/);
+assert.match(reviewHtml, /Product Design; UX Strategy; Design Systems/);
+assert.doesNotMatch(reviewHtml, /20 подходящих должностей и ключевые слова/);
 
 const preloader = renderToStaticMarkup(<GlobalPreloader label="Обрабатываю данные..." />);
 assert.match(preloader, /global-preloader/);

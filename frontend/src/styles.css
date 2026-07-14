@@ -420,22 +420,22 @@ select:focus {
   resize: vertical;
 }
 
-.role-match-section {
+.final-vacancy-section {
   display: grid;
   gap: var(--space-field);
 }
 
-.role-match-section h2 {
+.final-vacancy-section h2 {
   font-size: 18px;
 }
 
-.role-match-grid {
+.final-vacancy-grid {
   display: grid;
   gap: var(--space-field);
   grid-template-columns: repeat(4, minmax(240px, 1fr));
 }
 
-.role-match-card {
+.final-vacancy-card {
   background: rgba(5, 7, 8, 0.34);
   border: 1px solid rgba(201, 220, 40, 0.2);
   border-radius: 8px;
@@ -444,30 +444,56 @@ select:focus {
   padding: var(--space-field);
 }
 
-.role-match-card:hover {
+.final-vacancy-card:hover {
   background: rgba(5, 7, 8, 0.46);
   border-color: rgba(201, 220, 40, 0.42);
 }
 
-.role-match-card div {
+.final-vacancy-heading {
   align-items: center;
   display: flex;
   gap: 10px;
 }
 
-.role-match-card span {
+.final-vacancy-heading span {
   color: var(--accent);
   font-weight: 800;
 }
 
-.role-match-card p {
+.final-vacancy-card p {
   color: var(--muted);
   margin: 0;
 }
 
-.role-match-card small {
+.final-vacancy-card small {
   color: var(--text);
   line-height: 1.5;
+}
+
+.final-vacancy-meta,
+.final-vacancy-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.final-vacancy-meta span {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 5px 8px;
+}
+
+.final-vacancy-links a {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.final-vacancy-empty {
+  color: var(--muted);
+  margin: 0;
 }
 
 @media (max-width: 760px) {
@@ -492,7 +518,7 @@ select:focus {
   }
 
   .cv-review-grid,
-  .role-match-grid {
+  .final-vacancy-grid {
     grid-template-columns: 1fr;
   }
 }

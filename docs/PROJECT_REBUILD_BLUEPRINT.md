@@ -14,7 +14,7 @@ Build a Render-deployable web application that helps Aleksandr Grenkov turn a CV
 1. Accept a CV as pasted text or uploaded `.txt`, `.pdf`, or `.docx`.
 2. Parse the candidate profile from the CV.
 3. Review and improve the source CV in an ATS/recruiter-safe format.
-4. As a senior recruiter, list 20 roles the candidate best fits and exact keywords for each role.
+4. As a senior recruiter, derive 20 best-fit role directions and exact keywords as internal matching/search criteria.
 5. Search relevant vacancies from live/public sources when possible.
 6. Score and rank vacancies against the candidate profile.
 7. Generate one tailored CV per vacancy in the same language as the vacancy.
@@ -84,8 +84,8 @@ The first screen is CV-first:
 6. App shows `Анализ исходного CV` with:
    - source CV text,
    - improved ATS/recruiter-safe CV,
-   - exactly 20 best-fit roles,
-   - exact keywords for each role.
+   - one final clickable vacancy list,
+   - each vacancy's source, match score, priority, matched keywords, source link, and adapted CV link.
 7. App searches concrete vacancies from sources.
 8. App displays ranked vacancies in a horizontally scrollable table.
 9. Each vacancy row links to a vacancy-specific tailored CV via `/api/vacancies/{id}/tailored-cv.docx`.
@@ -203,7 +203,7 @@ Layout:
   - highlighted border/glow,
   - gradient top rule,
   - source CV and improved CV text areas,
-  - 20 role cards with keywords.
+  - final vacancy cards with CV match, keywords, source link, and tailored CV link.
 - Result table should have horizontal scrolling and not squeeze columns too tightly.
 - `Source Text` column should be wide, roughly similar to `Company`.
 - Table must show actual source in `Source`.
@@ -293,7 +293,9 @@ Candidate:
   - appends `Contact details` block to latest profile.
   - must not be required for search.
 - `GET /api/candidate/review`
-  - returns source CV, improved CV, and 20 role matches.
+  - returns source CV, improved CV, and 20 role matches used as recruiter guidance/search criteria.
+  - UI must not present those role matches as final vacancies.
+  - UI must present one final vacancy list based on `/api/vacancies`.
 - `GET /api/candidate/master-cv.docx`
   - downloads recruiter-safe ATS master CV template.
 
@@ -401,6 +403,8 @@ Each role must include:
 - tailored headline,
 - exact keywords,
 - adaptation strategy.
+
+These 20 role recommendations are search and matching criteria. They must not be shown as a competing vacancy list in the UI. The user-facing result list is the final vacancy list from `/api/vacancies`, with clickable source links and adapted CV links.
 
 ## 11. Data Import And Historical Artifacts
 
@@ -725,4 +729,3 @@ Use this checklist when rebuilding in a new environment:
 - [ ] Deploy via Render Blueprint.
 - [ ] Check `/api/health`.
 - [ ] Open deployed frontend and run the CV flow.
-
