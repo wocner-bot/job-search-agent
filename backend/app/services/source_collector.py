@@ -37,6 +37,47 @@ DESIGN_SIGNAL_TERMS = (
     "интерфейс",
     "исследователь",
 )
+TARGET_ROLE_TITLE_TERMS = (
+    "product designer",
+    "продуктовый дизайнер",
+    "ux designer",
+    "ui designer",
+    "ux/ui designer",
+    "ui/ux designer",
+    "ux researcher",
+    "product design",
+    "design systems",
+    "design system",
+    "automotive ux",
+    "hmi",
+    "voice ux",
+    "conversation designer",
+    "conversational designer",
+    "enterprise ux",
+    "b2b product designer",
+    "mobile product designer",
+    "smart city ux",
+    "mobility ux",
+    "telecom product designer",
+    "дизайнер интерфейсов",
+    "ux/ui дизайнер",
+    "ui/ux дизайнер",
+)
+EXCLUDED_TITLE_TERMS = (
+    "assistant",
+    "ассистент",
+    "marketing",
+    "маркетолог",
+    "sales",
+    "продаж",
+    "account manager",
+    "project manager",
+    "product manager",
+    "developer",
+    "engineer",
+    "recruiter",
+    "hr",
+)
 TELEGRAM_CHANNELS = (
     "wantapply_design",
     "young_relocate",
@@ -80,7 +121,7 @@ def collect_live_vacancies(
 
     candidates: list[Vacancy] = []
     seen: set[str] = set()
-    for role in roles[:8]:
+    for role in roles:
         for vacancy in _collect_linkedin_vacancies(role, fetch_text, per_role_limit):
             _append_unique(candidates, seen, vacancy)
         for vacancy in _collect_hh_vacancies(role, fetch_json, fetch_text, date_from, per_role_limit):
@@ -542,7 +583,8 @@ def _rank_vacancies(
     vacancies: list[Vacancy],
     max_results: int,
 ) -> list[Vacancy]:
-    ranked = sorted(vacancies, key=lambda vacancy: _relevance_score(profile, roles, vacancy), reverse=True)
+    aligned = [vacancy for vacancy in vacancies if _is_cv_aligned_vacancy(profile, roles, vacancy)]
+    ranked = sorted(aligned, key=lambda vacancy: _relevance_score(profile, roles, vacancy), reverse=True)
     ranked = _keep_source_groups_visible(ranked)
     selected = ranked[:max_results] if max_results > 0 else ranked
     for index, vacancy in enumerate(selected, start=1):
@@ -578,16 +620,7 @@ def _source_group(vacancy: Vacancy) -> str:
 
 
 def _relevance_score(profile: CandidateProfile, roles: tuple[RoleRecommendation, ...], vacancy: Vacancy) -> int:
-    text = " ".join(
-        [
-            vacancy.title,
-            vacancy.description_raw,
-            vacancy.requirements,
-            vacancy.responsibilities,
-            vacancy.vacancy_keywords,
-            vacancy.top_match_keywords,
-        ]
-    ).lower()
+    text = _actual_vacancy_text(vacancy)
     score = 0
     profile_keywords = _profile_keywords(profile, roles)
     score += sum(2 for keyword in profile_keywords if keyword in text)
@@ -603,6 +636,40 @@ def _relevance_score(profile: CandidateProfile, roles: tuple[RoleRecommendation,
         score += 12
     vacancy.fit_score = min(100, max(vacancy.fit_score, 55 + score))
     return score
+
+
+def _is_cv_aligned_vacancy(profile: CandidateProfile, roles: tuple[RoleRecommendation, ...], vacancy: Vacancy) -> bool:
+    text = _actual_vacancy_text(vacancy)
+    title = vacancy.title.lower()
+    strong_title_signal = any(term in title for term in TARGET_ROLE_TITLE_TERMS)
+    if _has_excluded_title(title) and not strong_title_signal:
+        return False
+
+    role_score = max((_role_match_score(text, role) for role in roles), default=0)
+    profile_keyword_hits = sum(1 for keyword in _profile_keywords(profile, roles) if keyword in text)
+    design_signal_hits = sum(1 for term in DESIGN_SIGNAL_TERMS if term in text)
+
+    if strong_title_signal and (role_score >= 7 or profile_keyword_hits >= 2 or design_signal_hits >= 2):
+        return True
+    if role_score >= 14 and profile_keyword_hits >= 2 and design_signal_hits >= 1:
+        return True
+    return False
+
+
+def _actual_vacancy_text(vacancy: Vacancy) -> str:
+    return " ".join(
+        [
+            vacancy.title,
+            vacancy.description_raw,
+            vacancy.requirements,
+            vacancy.responsibilities,
+            vacancy.vacancy_keywords,
+        ]
+    ).lower()
+
+
+def _has_excluded_title(title: str) -> bool:
+    return any(term in title for term in EXCLUDED_TITLE_TERMS)
 
 
 def _role_match_score(text: str, role: RoleRecommendation) -> int:

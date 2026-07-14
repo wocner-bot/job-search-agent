@@ -346,7 +346,12 @@ Priority thresholds:
 
 Ranking rules:
 
-- Score by matched title, role keywords, profile keywords, design-signal terms, source quality, and presence of actual source text.
+- Score only by real vacancy fields: title, source text, requirements, responsibilities, and extracted vacancy keywords.
+- Do not use agent-generated adaptation fields (`top_match_keywords`, `tailored_headline`, `adaptation_strategy`) as evidence of vacancy relevance.
+- Filter out vacancies that only match because role keywords were injected by the app.
+- Require a CV-aligned role/title signal before ranking a vacancy: Product Designer, UX/UI, HMI, Voice UX, Design Systems, Automotive UX, Enterprise UX, Mobility UX, Smart City UX, Telecom Product Designer, or equivalent Russian terms.
+- Exclude obvious non-CV roles such as assistant, marketing, sales, account/project/product manager, developer, engineer, recruiter, or HR unless the title also has a strong target design-role signal.
+- Score remaining vacancies by matched title, role keywords, profile keywords, design-signal terms, source quality, and presence of actual source text.
 - Penalize search-link-only rows.
 - Keep source groups visible so a single source does not crowd out LinkedIn/HH.ru/Telegram/WantApply.
 

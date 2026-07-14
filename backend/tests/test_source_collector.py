@@ -368,6 +368,40 @@ def test_collect_live_vacancies_skips_irrelevant_telegram_posts():
     assert telegram_titles == ["Senior UX/UI Designer Figma design systems"]
 
 
+def test_collect_live_vacancies_skips_rows_that_only_match_injected_role_keywords():
+    profile = CandidateProfile(
+        raw_cv_text="Lead Product Designer Automotive UX HMI Design Systems Figma English B2",
+        target_titles="Lead Product Designer / Automotive UX Designer",
+        experience_areas="Automotive UX; HMI; Design Systems; Figma",
+    )
+
+    def fake_text(url: str) -> str:
+        if "linkedin.com/jobs-guest" in url:
+            return """
+            <li>
+              <a class="base-card__full-link" href="https://www.linkedin.com/jobs/view/999?trackingId=abc"></a>
+              <h3 class="base-search-card__title">Operations Assistant</h3>
+              <h4 class="base-search-card__subtitle">Office Co</h4>
+              <span class="job-search-card__location">Remote</span>
+              <time datetime="2026-07-04"></time>
+            </li>
+            """
+        return ""
+
+    vacancies = collect_live_vacancies(
+        profile,
+        roles=ROLE_RECOMMENDATIONS[:1],
+        fetch_json=lambda _url, _params: {"items": []},
+        fetch_text=fake_text,
+        today=date(2026, 7, 6),
+        telegram_channels=(),
+        per_role_limit=1,
+        max_results=10,
+    )
+
+    assert vacancies == []
+
+
 def test_collect_live_vacancies_has_no_default_global_limit():
     profile = CandidateProfile(raw_cv_text="Product Designer Design Systems", target_titles="Product Designer")
 

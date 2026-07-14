@@ -40,9 +40,6 @@ def score_vacancy(profile: CandidateProfile, vacancy: Vacancy) -> ScoreResult:
             vacancy.requirements,
             vacancy.responsibilities,
             vacancy.vacancy_keywords,
-            vacancy.top_match_keywords,
-            vacancy.tailored_headline,
-            vacancy.adaptation_strategy,
         ]
     ).lower()
     matched_categories: list[str] = []

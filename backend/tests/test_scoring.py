@@ -50,6 +50,31 @@ def test_score_does_not_inherit_candidate_keywords_for_irrelevant_vacancy():
     assert "Design Systems" not in result.matched_keywords
 
 
+def test_score_ignores_injected_role_keywords_for_irrelevant_vacancy():
+    profile = CandidateProfile(
+        target_titles="Lead Product Designer / AI Product Designer",
+        experience_areas="Automotive UX; Voice UX; Design Systems; Enterprise UX",
+        languages="Russian native; English B2",
+    )
+    vacancy = Vacancy(
+        external_id="OPS-1",
+        company="Operations Co",
+        title="Operations Assistant",
+        language="English",
+        description_raw="Coordinate documents, support meetings, maintain internal spreadsheets.",
+        top_match_keywords="Automotive UX; HMI; Design Systems; Voice UX",
+        tailored_headline="Lead Product Designer - Automotive UX",
+        adaptation_strategy="Lead with product design and automotive HMI.",
+    )
+
+    result = score_vacancy(profile, vacancy)
+
+    assert result.priority == "Low"
+    assert result.fit_score < 70
+    assert "Automotive" not in result.matched_keywords
+    assert "Design Systems" not in result.matched_keywords
+
+
 def test_score_preserves_live_source_relevance_score():
     profile = CandidateProfile(
         target_titles="Lead Product Designer / AI Product Designer",
