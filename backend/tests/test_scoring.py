@@ -50,6 +50,29 @@ def test_score_does_not_inherit_candidate_keywords_for_irrelevant_vacancy():
     assert "Design Systems" not in result.matched_keywords
 
 
+def test_score_preserves_live_source_relevance_score():
+    profile = CandidateProfile(
+        target_titles="Lead Product Designer / AI Product Designer",
+        experience_areas="Automotive UX; Voice UX; Design Systems; Enterprise UX",
+        languages="Russian native; English B2",
+    )
+    vacancy = Vacancy(
+        external_id="SRC-96",
+        company="Relevant Studio",
+        title="Product Designer",
+        language="English",
+        fit_score=96,
+        priority="Very High",
+        top_match_keywords="Product Design; UX Strategy; Design Systems",
+        source_url="https://example.com/jobs/product-designer",
+    )
+
+    result = score_vacancy(profile, vacancy)
+
+    assert result.fit_score == 96
+    assert result.priority == "Very High"
+
+
 def test_generate_materials_does_not_mark_sent():
     profile = CandidateProfile(name="Aleksandr Grenkov", target_titles="Lead Product Designer")
     vacancy = Vacancy(

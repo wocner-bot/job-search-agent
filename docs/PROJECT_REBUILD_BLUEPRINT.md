@@ -81,13 +81,9 @@ The first screen is CV-first:
 3. Contacts are optional and must not block vacancy search.
 4. User clicks `Подобрать вакансии`.
 5. App saves the candidate profile.
-6. App shows `Анализ исходного CV` with:
-   - source CV text,
-   - improved ATS/recruiter-safe CV,
-   - one final clickable vacancy list,
-   - each vacancy's source, match score, priority, matched keywords, source link, and adapted CV link.
-7. App searches concrete vacancies from sources.
-8. App displays ranked vacancies in a horizontally scrollable table.
+6. App searches concrete vacancies from sources.
+7. App displays one final ranked vacancy list in a horizontally scrollable table.
+8. Each row shows source, match score, priority, matched keywords, source link, and adapted CV link.
 9. Each vacancy row links to a vacancy-specific tailored CV via `/api/vacancies/{id}/tailored-cv.docx`.
 10. User manually opens the vacancy source, verifies details, and sends materials outside the app.
 
@@ -198,12 +194,8 @@ Layout:
 - `Подобрать вакансии` button uses a magic wand icon and gradient styling.
 - `Choose file` / file picker button is black.
 - Contacts block is optional and must not block search.
-- `Анализ исходного CV` must have strong visual emphasis:
-  - badge `Senior recruiter review`,
-  - highlighted border/glow,
-  - gradient top rule,
-  - source CV and improved CV text areas,
-  - final vacancy cards with CV match, keywords, source link, and tailored CV link.
+- Do not show a separate `Анализ исходного CV` / recruiter-review block.
+- The vacancy table is the single final result list and must show source, match score, keywords, source link, and tailored CV link.
 - Result table should have horizontal scrolling and not squeeze columns too tightly.
 - `Source Text` column should be wide, roughly similar to `Company`.
 - Table must show actual source in `Source`.
@@ -471,7 +463,6 @@ Important files:
 - `frontend/src/api.ts`: API client and `apiUrl`.
 - `frontend/src/types.ts`: frontend DTOs.
 - `frontend/src/components/CvIntake.tsx`: CV text/file/contact/match button.
-- `frontend/src/components/CvReviewPanel.tsx`: highlighted recruiter review block.
 - `frontend/src/components/VacancyTable.tsx`: result table with source and CV links.
 - `frontend/src/components/VacancyDetail.tsx`: detail/status/materials panel.
 - `frontend/src/components/VacancyFilters.tsx`: priority/source/language/work-mode/region filters.
@@ -484,10 +475,9 @@ Frontend data flow for `Подобрать вакансии`:
 1. Validate that CV text or CV file exists.
 2. Save CV via `/api/candidate/text` or `/api/candidate/upload`.
 3. If optional contacts were entered for a file upload, call `/api/candidate/contacts`.
-4. Call `/api/candidate/review`.
-5. Call `/api/analysis/from-sources`.
-6. Refresh `/api/vacancies` and `/api/materials`.
-7. Display message with found/analyzed counts.
+4. Call `/api/analysis/from-sources`.
+5. Refresh `/api/vacancies` and `/api/materials`.
+6. Display message with found/analyzed counts.
 
 If sources return no concrete vacancies, the UI says live sources did not return concrete vacancies and does not add search links as vacancies.
 
@@ -723,8 +713,8 @@ Use this checklist when rebuilding in a new environment:
 - [ ] Paste or upload a CV.
 - [ ] Optionally enter contacts.
 - [ ] Click `Подобрать вакансии`.
-- [ ] Confirm `Анализ исходного CV` appears.
-- [ ] Confirm vacancy table shows source, source link, region, work mode, source text, and adapted CV link.
+- [ ] Confirm `Анализ исходного CV` does not appear.
+- [ ] Confirm the single vacancy table shows source, source link, region, work mode, source text, match score, priority, and adapted CV link.
 - [ ] Download at least one tailored CV and confirm language/name/contact/skills rules.
 - [ ] Deploy via Render Blueprint.
 - [ ] Check `/api/health`.

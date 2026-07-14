@@ -57,7 +57,8 @@ def score_vacancy(profile: CandidateProfile, vacancy: Vacancy) -> ScoreResult:
         raw_score += 3
     if not matched_categories:
         raw_score = min(raw_score, 58)
-    score = min(100, max(0, raw_score))
+    computed_score = min(100, max(0, raw_score))
+    score = max(vacancy.fit_score, computed_score)
     matched_parts = matched_categories[:]
     if vacancy.vacancy_keywords:
         matched_parts.extend(keyword.strip() for keyword in vacancy.vacancy_keywords.split(";") if keyword.strip())
@@ -70,5 +71,8 @@ def score_vacancy(profile: CandidateProfile, vacancy: Vacancy) -> ScoreResult:
         matched_keywords=matched,
         gaps_risks=gaps,
         adaptation_strategy=strategy,
-        explanation=f"Score combines title seniority, language fit, and matched categories: {matched or 'none'}.",
+        explanation=(
+            "Score combines source relevance, title seniority, language fit, and matched categories: "
+            f"{matched or 'none'}."
+        ),
     )

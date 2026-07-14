@@ -1,4 +1,4 @@
-import type { ApplicationMaterial, ApplicationStatus, CandidateReview, Vacancy, VacancyDraft } from "./types";
+import type { ApplicationMaterial, ApplicationStatus, Vacancy, VacancyDraft } from "./types";
 
 const rawApiBase = import.meta.env?.VITE_API_BASE ?? "";
 const API_BASE = rawApiBase && !rawApiBase.startsWith("http") ? `https://${rawApiBase}` : rawApiBase;
@@ -54,7 +54,6 @@ export const api = {
   uploadCandidateCv: (file: File) => upload("/api/candidate/upload", file),
   updateCandidateContacts: (contacts: Record<string, string>) =>
     request("/api/candidate/contacts", { method: "POST", body: JSON.stringify(contacts) }),
-  reviewCandidate: () => request<CandidateReview>("/api/candidate/review"),
   uploadVacancyFile: (file: File) => upload<{ imported: number }>("/api/imports/vacancies/upload", file),
   generateMatchesFromCv: () => request<{ generated: number; analyzed: number }>("/api/analysis/from-cv", { method: "POST" }),
   collectMatchesFromSources: () =>
